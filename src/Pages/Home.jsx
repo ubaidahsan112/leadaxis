@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Search,
@@ -20,7 +20,46 @@ import {
 import logo from "../assets/logo.png";
 import Booking from "../Components/Booking";
 import ScrollReveal from "../Components/ScrollReveal";
+import ubaidImage from "../assets/profile.jpeg";
 
+<style>{`
+  @keyframes heroCharEnter {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+    }
+
+    45% {
+      opacity: 1;
+      transform: translateY(-2px) scale(1.015);
+    }
+
+    65% {
+      transform: translateX(-1px) rotate(-0.4deg);
+    }
+
+    80% {
+      transform: translateX(1px) rotate(0.4deg);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1) rotate(0);
+    }
+  }
+
+  .hero-char-visible {
+    animation: heroCharEnter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-char-visible {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+`}</style>
 
 // ============================================================
 // SERVICES
@@ -284,28 +323,6 @@ const projects = [
 
   {
     category: "Website Development",
-    title: "NovaCore Legal",
-    metric: "+82%",
-    metricLabel: "Qualified inquiries",
-    description:
-      "A modern React website built for a growing legal services company, featuring conversion-focused service pages and streamlined inquiry flows.",
-    tags: ["React", "Tailwind CSS", "Responsive UI"],
-    accent: "dark",
-  },
-
-  {
-    category: "Website Development",
-    title: "UrbanNest Realty",
-    metric: "4.8x",
-    metricLabel: "Property engagement",
-    description:
-      "A responsive React real-estate experience designed around property discovery, lead capture, location-based browsing, and high-intent buyer journeys.",
-    tags: ["React", "UI/UX", "Property Search"],
-    accent: "lime",
-  },
-
-  {
-    category: "Website Development",
     title: "FinEdge Advisory",
     metric: "+64%",
     metricLabel: "Lead conversions",
@@ -337,18 +354,6 @@ const projects = [
     accent: "dark",
   },
 
-  {
-    category: "Website Development",
-    title: "Oak & Stone Interiors",
-    metric: "2.7x",
-    metricLabel: "Project inquiries",
-    description:
-      "A premium interior design portfolio website built around visual storytelling, project galleries, service discovery, and consultation requests.",
-    tags: ["React", "Portfolio", "Web Design"],
-    accent: "lime",
-  },
-
-
   // ----------------------------------------------------------
   // REACT NATIVE
   // ----------------------------------------------------------
@@ -366,17 +371,6 @@ const projects = [
 
   {
     category: "React Native",
-    title: "FitTrack",
-    metric: "24/7",
-    metricLabel: "Fitness tracking",
-    description:
-      "A mobile fitness experience designed around workout tracking, progress monitoring, exercise discovery, and personalized user journeys.",
-    tags: ["React Native", "Mobile UI", "API Integration"],
-    accent: "lime",
-  },
-
-  {
-    category: "React Native",
     title: "ServicePro",
     metric: "3.6x",
     metricLabel: "Faster job updates",
@@ -384,17 +378,6 @@ const projects = [
       "A field-service mobile application connecting technicians with service requests, job details, status updates, and customer information.",
     tags: ["React Native", "REST API", "Real-Time Data"],
     accent: "dark",
-  },
-
-  {
-    category: "React Native",
-    title: "TableFlow",
-    metric: "+73%",
-    metricLabel: "Order efficiency",
-    description:
-      "A restaurant-focused mobile experience built for browsing menus, managing orders, and creating a smoother digital ordering journey.",
-    tags: ["React Native", "Restaurant", "API"],
-    accent: "lime",
   },
 
   {
@@ -408,16 +391,6 @@ const projects = [
     accent: "dark",
   },
 
-  {
-    category: "React Native",
-    title: "MarketMate",
-    metric: "5K+",
-    metricLabel: "Product interactions",
-    description:
-      "A mobile marketplace interface combining category browsing, product discovery, user authentication, cart functionality, and streamlined checkout.",
-    tags: ["React Native", "E-Commerce", "Firebase"],
-    accent: "lime",
-  },
 ];
 
 
@@ -543,8 +516,37 @@ const Home = () => {
       review: "",
     });
   };
+const [heroCharIndex, setHeroCharIndex] = useState(-1);
 
+useEffect(() => {
+  const firstLine = "Turn Every Lead";
+  const secondLine = "Into an Opportunity.";
 
+  const totalCharacters =
+    firstLine.length + secondLine.length;
+
+  let index = 0;
+
+  const timer = setInterval(() => {
+    setHeroCharIndex(index);
+
+    // Subtle haptic feedback where the browser/device supports it.
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.vibrate === "function"
+    ) {
+      navigator.vibrate(8);
+    }
+
+    index += 1;
+
+    if (index >= totalCharacters) {
+      clearInterval(timer);
+    }
+  }, 65);
+
+  return () => clearInterval(timer);
+}, []);
   return (
     <main className="overflow-hidden">
 
@@ -597,15 +599,74 @@ const Home = () => {
             <ScrollReveal direction="left" delay={100}>
 
               <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-8xl">
+  {[
+    {
+      text: "Turn Every Lead",
+      color: "text-white",
+    },
+    {
+      text: "Into an Opportunity.",
+      color: "text-lime-300",
+    },
+  ].map((line, lineIndex) => {
+    let characterOffset = 0;
 
-                Turn Every Lead
+    if (lineIndex === 1) {
+      characterOffset = "Turn Every Lead".length;
+    }
 
-                <span className="block text-lime-300">
-                  Into an Opportunity.
+    return (
+      <span
+        key={lineIndex}
+        className={`block ${line.color}`}
+      >
+        {line.text.split(" ").map((word, wordIndex) => {
+          const previousWords = line.text
+            .split(" ")
+            .slice(0, wordIndex)
+            .join(" ");
+
+          const wordStart =
+            characterOffset +
+            previousWords.length +
+            (wordIndex > 0 ? 1 : 0);
+
+          return (
+           <span
+  key={`${lineIndex}-${word}`}
+  className={`inline-block whitespace-nowrap ${
+    wordIndex < line.text.split(" ").length - 1 ? "mr-3" : ""
+  }`}
+>
+              {word.split("").map((char, charIndex) => {
+                const globalIndex = wordStart + charIndex;
+
+                return (
+                  <span
+                    key={`${lineIndex}-${word}-${charIndex}`}
+                    className={
+                      heroCharIndex >= globalIndex
+                        ? "inline-block hero-char-visible"
+                        : "inline-block opacity-0"
+                    }
+                  >
+                    {char}
+                  </span>
+                );
+              })}
+
+              {wordIndex < line.text.split(" ").length - 1 && (
+                <span className="inline-block">
+                  {" "}
                 </span>
-
-              </h1>
-
+              )}
+            </span>
+          );
+        })}
+      </span>
+    );
+  })}
+</h1>
             </ScrollReveal>
 
 
@@ -1162,6 +1223,129 @@ const Home = () => {
             ))}
 
           </div>
+
+        {/* owner info  */}
+        {/* ==================== ABOUT / FOUNDER SECTION ==================== */}
+<section
+  id="about"
+  className="relative overflow-hidden bg-gray-950 py-24 sm:py-28"
+>
+  {/* Background Glow */}
+  <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-lime-300/10 blur-[120px]" />
+  <div className="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-lime-300/10 blur-[120px]" />
+
+  <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+    <div className="mx-auto max-w-5xl text-center">
+
+      {/* Label */}
+      <ScrollReveal direction="up">
+        <span className="inline-flex items-center rounded-full border border-lime-300/20 bg-lime-300/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-lime-300">
+          Meet the Founder
+        </span>
+      </ScrollReveal>
+
+      {/* Image */}
+      <ScrollReveal direction="up" delay={100}>
+        <div className="mt-8 flex justify-center">
+          <div className="relative">
+            {/* Glow */}
+            <div className="absolute inset-0 rounded-full bg-lime-300/20 blur-3xl" />
+
+            {/* Image */}
+            <div className="relative h-44 w-44 overflow-hidden rounded-full border-2 border-lime-300/30 bg-gray-900 shadow-2xl sm:h-52 sm:w-52">
+              <img
+                src={ubaidImage}
+                alt="Ubaid Ahsan"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Name */}
+      <ScrollReveal direction="up" delay={150}>
+        <h2 className="mt-8 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+          Ubaid <span className="text-lime-300">Ahsan</span>
+        </h2>
+
+        <p className="mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-gray-400 sm:text-base">
+          Inbound Call & Pay-Per-Call Specialist
+        </p>
+      </ScrollReveal>
+
+      {/* Info */}
+      <ScrollReveal direction="up" delay={200}>
+        <div className="mx-auto mt-8 flex max-w-2xl flex-wrap justify-center gap-3">
+          <div className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm text-gray-300">
+            📍 Islamabad, Pakistan
+          </div>
+
+          <div className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm text-gray-300">
+            🎂 Age 23
+          </div>
+
+          <div className="rounded-full border border-lime-300/20 bg-lime-300/5 px-5 py-3 text-sm font-medium text-lime-300">
+            ☎️ Inbound Calls & Pay-Per-Call
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Description */}
+      <ScrollReveal direction="up" delay={250}>
+        <div className="mx-auto mt-10 max-w-4xl">
+          <p className="text-base leading-8 text-gray-300 sm:text-lg">
+            I specialize in{" "}
+            <span className="font-semibold text-white">
+              inbound call generation and Pay-Per-Call marketing
+            </span>
+            , connecting businesses with high-intent customers who are
+            actively searching for the services they need. My experience
+            covers campaign sourcing, traffic generation, call quality,
+            and performance-focused lead acquisition across service-based
+            industries.
+          </p>
+
+          <p className="mt-6 text-base leading-8 text-gray-400 sm:text-lg">
+            I focus on building{" "}
+            <span className="font-semibold text-gray-200">
+              reliable, scalable, and performance-driven call campaigns
+            </span>{" "}
+            where quality matters as much as volume. From understanding
+            campaign requirements and targeting the right audience to
+            generating relevant inbound calls, my approach is centered
+            around creating valuable connections between businesses and
+            potential customers.
+          </p>
+
+          <p className="mt-6 text-base leading-8 text-gray-400 sm:text-lg">
+            Through{" "}
+            <span className="font-semibold text-lime-300">LeadAxis</span>,
+            my goal is to build long-term partnerships by delivering
+            consistent, quality-driven inbound traffic and turning
+            customer intent into measurable business opportunities.
+          </p>
+        </div>
+      </ScrollReveal>
+
+      {/* CTA */}
+      <ScrollReveal direction="up" delay={300}>
+        <div className="mt-10">
+          <p className="text-lg font-semibold text-white sm:text-xl">
+            Looking for quality inbound calls for your business?
+          </p>
+
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-gray-400 sm:text-base">
+            Let's connect, discuss your campaign requirements, and build a
+            Pay-Per-Call partnership focused on real opportunities and
+            sustainable growth.
+          </p>
+        </div>
+      </ScrollReveal>
+
+    </div>
+  </div>
+</section>
 
 
           {/* PROJECT CTA */}

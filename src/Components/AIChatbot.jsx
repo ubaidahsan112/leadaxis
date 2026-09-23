@@ -14,8 +14,10 @@ import { useNavigate } from "react-router-dom";
 const AIChatbot = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,14 +29,51 @@ const AIChatbot = () => {
     },
   ]);
 
-  // Scroll to latest message
+  /*
+  |--------------------------------------------------------------------------
+  | Open / Close Animation
+  |--------------------------------------------------------------------------
+  */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [messages, isLoading]);
+    if (isOpen) {
+      // Small delay allows the browser to render the initial state
+      // before starting the opening animation.
+      requestAnimationFrame(() => {
+        setIsVisible(true);
+      });
 
-  // Send message
+      // Focus input on desktop only.
+      if (window.innerWidth >= 640) {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 300);
+      }
+    } else {
+      setIsVisible(false);
+    }
+  }, [isOpen]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Scroll To Latest Message
+  |--------------------------------------------------------------------------
+  */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    });
+  }, [messages, isLoading, isOpen]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Send Message
+  |--------------------------------------------------------------------------
+  */
   const sendMessage = async (customMessage = null) => {
     const message = (customMessage ?? input).trim();
 
@@ -93,11 +132,21 @@ const AIChatbot = () => {
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Submit
+  |--------------------------------------------------------------------------
+  */
   const handleSubmit = (e) => {
     e.preventDefault();
     sendMessage();
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Enter Key
+  |--------------------------------------------------------------------------
+  */
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -105,6 +154,25 @@ const AIChatbot = () => {
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Close Chatbot
+  |--------------------------------------------------------------------------
+  */
+  const closeChatbot = () => {
+    setIsVisible(false);
+
+    // Wait for close animation before removing component.
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 250);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Quick Questions
+  |--------------------------------------------------------------------------
+  */
   const quickActions = [
     "What does LeadAxis do?",
     "I need qualified leads",
@@ -114,47 +182,96 @@ const AIChatbot = () => {
   return (
     <>
       {/* =====================================================
+          MOBILE BACKDROP
+      ===================================================== */}
+
+      {isOpen && (
+        <div
+          onClick={closeChatbot}
+          className={`
+            fixed
+            inset-0
+            z-[998]
+            bg-black/30
+            backdrop-blur-[2px]
+            transition-opacity
+            duration-300
+            sm:hidden
+            ${
+              isVisible
+                ? "pointer-events-auto opacity-100"
+                : "pointer-events-none opacity-0"
+            }
+          `}
+        />
+      )}
+
+      {/* =====================================================
           CHAT WINDOW
       ===================================================== */}
 
       {isOpen && (
         <div
-          className="
+          className={`
             fixed
-            bottom-[88px]
-            right-4
-            z-[1000]
+            z-[999]
+
+            /* MOBILE */
+            inset-x-0
+            bottom-0
             flex
-            h-[min(620px,calc(100vh-110px))]
-            w-[380px]
-            max-w-[calc(100vw-32px)]
+            h-[100dvh]
+            w-full
             flex-col
             overflow-hidden
-            rounded-2xl
+            rounded-t-[24px]
+            bg-white
+
+            /* Desktop */
+            sm:bottom-[88px]
+            sm:right-6
+            sm:left-auto
+            sm:h-[min(620px,calc(100vh-110px))]
+            sm:w-[390px]
+            sm:rounded-2xl
+
             border
             border-gray-200
-            bg-white
-            shadow-[0_20px_60px_rgba(0,0,0,0.18)]
-            animate-[fadeIn_.2s_ease-out]
-            sm:right-6
-            sm:w-[390px]
-          "
+
+            shadow-[0_20px_70px_rgba(0,0,0,0.20)]
+
+            transform
+            transition-all
+            duration-300
+            ease-[cubic-bezier(0.22,1,0.36,1)]
+
+            ${
+              isVisible
+                ? "translate-y-0 scale-100 opacity-100"
+                : "translate-y-8 scale-[0.97] opacity-0"
+            }
+          `}
         >
+          {/* =====================================================
+              MOBILE DRAG / CLOSE HANDLE
+          ===================================================== */}
+
+          <div className="absolute left-1/2 top-2 z-20 -translate-x-1/2 sm:hidden">
+            <div className="h-1 w-10 rounded-full bg-white/40" />
+          </div>
+
           {/* =====================================================
               HEADER
           ===================================================== */}
 
-          <div className="relative shrink-0 overflow-hidden bg-[#0a0d0a] px-4 py-4 text-white">
-
+          <div className="relative shrink-0 overflow-hidden bg-[#0a0d0a] px-4 pb-4 pt-5 text-white sm:pt-4">
             {/* Green glow */}
-            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-lime-300/20 blur-3xl" />
+            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-lime-300/20 blur-3xl" />
 
             <div className="relative flex items-center justify-between">
-
               <div className="flex items-center gap-3">
-
                 {/* AI Icon */}
-                <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-lime-300 text-[#0a0d0a] shadow-lg shadow-lime-300/10">
+                <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime-300 text-[#0a0d0a] shadow-lg shadow-lime-300/10">
                   <Bot size={23} strokeWidth={2.2} />
 
                   <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#0a0d0a] bg-lime-400" />
@@ -163,6 +280,7 @@ const AIChatbot = () => {
                 <div>
                   <div className="flex items-center gap-1.5 text-[15px] font-semibold">
                     LeadAxis AI
+
                     <Sparkles
                       size={13}
                       className="text-lime-300"
@@ -174,30 +292,30 @@ const AIChatbot = () => {
                     Online • AI Assistant
                   </div>
                 </div>
-
               </div>
 
               {/* Close */}
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={closeChatbot}
                 aria-label="Close LeadAxis AI"
                 className="
                   flex
-                  h-9
-                  w-9
+                  h-10
+                  w-10
                   items-center
                   justify-center
-                  rounded-lg
+                  rounded-full
                   text-gray-400
-                  transition
+                  transition-all
+                  duration-200
                   hover:bg-white/10
                   hover:text-white
+                  active:scale-90
                 "
               >
-                <X size={19} />
+                <X size={20} />
               </button>
-
             </div>
           </div>
 
@@ -210,28 +328,30 @@ const AIChatbot = () => {
               min-h-0
               flex-1
               overflow-y-auto
+              overscroll-contain
               bg-[#f7f8f6]
               px-3
-              py-4
+              py-5
               sm:px-4
             "
+            style={{
+              WebkitOverflowScrolling: "touch",
+            }}
           >
-
-            {/* Welcome label */}
+            {/* Welcome */}
             {messages.length === 1 && (
-              <div className="mb-5 text-center">
-
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-300 text-[#0a0d0a] shadow-sm">
+              <div className="mb-6 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-300 text-[#0a0d0a] shadow-sm">
                   <MessageCircle size={22} />
                 </div>
 
                 <p className="text-xs font-medium text-gray-500">
                   How can we help your business?
                 </p>
-
               </div>
             )}
 
+            {/* Messages */}
             {messages.map((message, index) => {
               const isUser = message.role === "user";
 
@@ -245,11 +365,10 @@ const AIChatbot = () => {
                   }`}
                 >
                   <div
-                    className={`flex max-w-[88%] items-end gap-2 ${
+                    className={`flex max-w-[90%] items-end gap-2 ${
                       isUser ? "flex-row-reverse" : ""
                     }`}
                   >
-
                     {/* Avatar */}
                     <div
                       className={`
@@ -274,7 +393,7 @@ const AIChatbot = () => {
                       )}
                     </div>
 
-                    {/* Message bubble */}
+                    {/* Message */}
                     <div
                       className={`
                         rounded-2xl
@@ -292,7 +411,6 @@ const AIChatbot = () => {
                     >
                       {message.content}
                     </div>
-
                   </div>
                 </div>
               );
@@ -301,9 +419,7 @@ const AIChatbot = () => {
             {/* Loading */}
             {isLoading && (
               <div className="mb-3.5 flex justify-start">
-
                 <div className="flex items-end gap-2">
-
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-300 text-[#0a0d0a]">
                     <Bot size={14} />
                   </div>
@@ -318,7 +434,6 @@ const AIChatbot = () => {
                       Thinking...
                     </span>
                   </div>
-
                 </div>
               </div>
             )}
@@ -332,13 +447,11 @@ const AIChatbot = () => {
 
           {messages.length === 1 && (
             <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-3">
-
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                 Quick questions
               </div>
 
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-
                 {quickActions.map((question) => (
                   <button
                     type="button"
@@ -357,6 +470,7 @@ const AIChatbot = () => {
                       font-medium
                       text-gray-600
                       transition
+                      active:scale-95
                       hover:border-lime-300
                       hover:bg-lime-50
                       hover:text-gray-900
@@ -366,7 +480,6 @@ const AIChatbot = () => {
                     {question}
                   </button>
                 ))}
-
               </div>
             </div>
           )}
@@ -378,8 +491,11 @@ const AIChatbot = () => {
           <button
             type="button"
             onClick={() => {
-              setIsOpen(false);
-              navigate("/booking");
+              closeChatbot();
+
+              setTimeout(() => {
+                navigate("/booking");
+              }, 250);
             }}
             className="
               mx-3
@@ -392,12 +508,14 @@ const AIChatbot = () => {
               rounded-xl
               bg-lime-300
               px-4
-              py-2.5
+              py-3
               text-xs
               font-bold
               text-[#0a0d0a]
               shadow-sm
-              transition
+              transition-all
+              duration-200
+              active:scale-[0.98]
               hover:bg-lime-400
               hover:shadow-md
               sm:mx-4
@@ -413,7 +531,15 @@ const AIChatbot = () => {
 
           <form
             onSubmit={handleSubmit}
-            className="shrink-0 border-t border-gray-200 bg-white p-3"
+            className="
+              shrink-0
+              border-t
+              border-gray-200
+              bg-white
+              px-3
+              pb-[calc(12px+env(safe-area-inset-bottom))]
+              pt-3
+            "
           >
             <div
               className="
@@ -433,8 +559,8 @@ const AIChatbot = () => {
                 focus-within:ring-lime-300/20
               "
             >
-
               <input
+                ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -446,8 +572,8 @@ const AIChatbot = () => {
                   flex-1
                   bg-transparent
                   px-1
-                  py-2
-                  text-xs
+                  py-2.5
+                  text-[13px]
                   text-gray-800
                   outline-none
                   placeholder:text-gray-400
@@ -469,7 +595,9 @@ const AIChatbot = () => {
                   rounded-lg
                   bg-[#0a0d0a]
                   text-lime-300
-                  transition
+                  transition-all
+                  duration-200
+                  active:scale-90
                   hover:bg-gray-800
                   disabled:cursor-not-allowed
                   disabled:opacity-30
@@ -477,7 +605,6 @@ const AIChatbot = () => {
               >
                 <Send size={15} />
               </button>
-
             </div>
 
             <p className="mt-1.5 text-center text-[9px] text-gray-400">
@@ -493,7 +620,13 @@ const AIChatbot = () => {
 
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (isOpen) {
+            closeChatbot();
+          } else {
+            setIsOpen(true);
+          }
+        }}
         aria-label={
           isOpen
             ? "Close LeadAxis AI"
@@ -517,6 +650,8 @@ const AIChatbot = () => {
           ring-white/10
           transition-all
           duration-300
+          ease-out
+          active:scale-90
           hover:scale-105
           hover:bg-gray-900
           hover:shadow-[0_12px_35px_rgba(0,0,0,0.28)]
