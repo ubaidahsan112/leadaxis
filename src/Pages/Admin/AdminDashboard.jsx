@@ -21,82 +21,74 @@ const AdminDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchDashboard = useCallback(
-    async (showRefresh = false) => {
-      try {
-        if (showRefresh) {
-          setRefreshing(true);
-        } else {
-          setLoading(true);
-        }
-
-        setError("");
-
-        const response = await fetch("/api/dashboard", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        });
-
-        const responseText = await response.text();
-
-        console.log(
-          "Dashboard HTTP status:",
-          response.status
-        );
-
-        console.log(
-          "Dashboard response:",
-          responseText
-        );
-
-        if (!responseText.trim()) {
-          throw new Error(
-            `Dashboard API returned an empty response. HTTP status: ${response.status}`
-          );
-        }
-
-        let data;
-
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error(
-            "Dashboard JSON parse error:",
-            parseError
-          );
-
-          throw new Error(
-            "Dashboard API returned invalid JSON."
-          );
-        }
-
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data?.message ||
-              `Dashboard request failed with status ${response.status}.`
-          );
-        }
-
-        setDashboard(data.data);
-      } catch (err) {
-        console.error(
-          "Dashboard fetch error:",
-          err
-        );
-
-        setError(
-          err.message ||
-            "Dashboard data could not be loaded. Please make sure the backend is running."
-        );
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+ const fetchDashboard = useCallback(
+  async (showRefresh = false) => {
+    try {
+      if (showRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-    },
-    []
-  );
+
+      setError("");
+
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      if (!API_URL) {
+        throw new Error("VITE_API_URL is not configured.");
+      }
+
+      const response = await fetch(`${API_URL}/api/dashboard`, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const responseText = await response.text();
+
+      console.log("Dashboard HTTP status:", response.status);
+      console.log("Dashboard response:", responseText);
+
+      if (!responseText.trim()) {
+        throw new Error(
+          `Dashboard API returned an empty response. HTTP status: ${response.status}`
+        );
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Dashboard JSON parse error:", parseError);
+
+        throw new Error("Dashboard API returned invalid JSON.");
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data?.message ||
+            `Dashboard request failed with status ${response.status}.`
+        );
+      }
+
+      setDashboard(data.data);
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+
+      setError(
+        err.message ||
+          "Dashboard data could not be loaded. Please make sure the backend is running."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  },
+  []
+);
+
 
   useEffect(() => {
     fetchDashboard();
