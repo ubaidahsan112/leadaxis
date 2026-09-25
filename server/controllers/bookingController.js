@@ -22,6 +22,8 @@ export const createBooking = async (req, res) => {
       monthlyBudget,
       monthlyLeads,
       goals,
+      consultationDate,
+      consultationTime,
     } = req.body;
 
     /*
@@ -43,9 +45,37 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    if (!businessName || !businessName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Business name is required.",
+      });
+    }
+
+    if (!industry) {
+      return res.status(400).json({
+        success: false,
+        message: "Industry is required.",
+      });
+    }
+
+    if (!consultationDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Consultation date is required.",
+      });
+    }
+
+    if (!consultationTime) {
+      return res.status(400).json({
+        success: false,
+        message: "Consultation time is required.",
+      });
+    }
+
     /*
     |--------------------------------------------------------------------------
-    | Save Booking / Lead to Database
+    | Save Booking / Lead
     |--------------------------------------------------------------------------
     */
     const result = await pool.query(
@@ -62,16 +92,33 @@ export const createBooking = async (req, res) => {
         budget,
         monthly_leads,
         goals,
+        consultation_date,
+        consultation_time,
         status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'New')
+      VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13,
+        'New'
+      )
       RETURNING *
       `,
       [
         name.trim(),
         email.trim(),
-        businessName?.trim() || null,
-        industry || null,
+        businessName.trim(),
+        industry,
         location?.trim() || null,
         website?.trim() || null,
         phone?.trim() || null,
@@ -79,6 +126,8 @@ export const createBooking = async (req, res) => {
         monthlyBudget || null,
         monthlyLeads?.trim() || null,
         goals?.trim() || null,
+        consultationDate || null,
+        consultationTime || null,
       ]
     );
 
@@ -93,10 +142,6 @@ export const createBooking = async (req, res) => {
     |--------------------------------------------------------------------------
     | Send Email Notification
     |--------------------------------------------------------------------------
-    |
-    | Email failure will NOT stop the booking from being saved.
-    | The lead will still appear in the Admin Dashboard.
-    |
     */
     try {
       await sendBookingEmail(booking);
@@ -218,6 +263,8 @@ export const updateBooking = async (req, res) => {
       monthlyBudget,
       monthlyLeads,
       goals,
+      consultationDate,
+      consultationTime,
       status,
     } = req.body;
 
@@ -236,8 +283,10 @@ export const updateBooking = async (req, res) => {
         budget = COALESCE($9, budget),
         monthly_leads = COALESCE($10, monthly_leads),
         goals = COALESCE($11, goals),
-        status = COALESCE($12, status)
-      WHERE id = $13
+        consultation_date = COALESCE($12, consultation_date),
+        consultation_time = COALESCE($13, consultation_time),
+        status = COALESCE($14, status)
+      WHERE id = $15
       RETURNING *
       `,
       [
@@ -252,6 +301,8 @@ export const updateBooking = async (req, res) => {
         monthlyBudget || null,
         monthlyLeads?.trim() || null,
         goals?.trim() || null,
+        consultationDate || null,
+        consultationTime || null,
         status || null,
         id,
       ]
