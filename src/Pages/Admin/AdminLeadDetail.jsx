@@ -26,8 +26,7 @@ import AdminSidebar from "../../Components/AdminSidebar";
    API
 ------------------------------------------------------- */
 
-const API_URL = import.meta.env.VITE_API_URL || "";
-
+const API_URL = "https://leadaxis-production.up.railway.app";
 /* -------------------------------------------------------
    Reusable Information Item
 ------------------------------------------------------- */
@@ -119,13 +118,12 @@ const AdminLeadDetails = () => {
 
         setError("");
 
-        const response = await fetch(`${API_URL}/api/bookings/${id}`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        });
-
+       const response = await fetch(`${API_URL}/api/bookings/${id}`, {
+  method: "GET",
+  headers: {
+    Accept: "application/json",
+  },
+});
         const responseText = await response.text();
 
         if (!responseText.trim()) {
