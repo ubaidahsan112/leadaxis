@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,7 +17,9 @@ import {
   Clock3,
   Sparkles,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
+
 import toast from "react-hot-toast";
 import ScrollReveal from "../Components/ScrollReveal";
 
@@ -79,30 +82,23 @@ const BookingPage = () => {
 
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [assessmentComplete, setAssessmentComplete] = useState(false);
+
   const [consultationDate, setConsultationDate] = useState("");
   const [consultationTime, setConsultationTime] = useState("");
+
   const [confirmed, setConfirmed] = useState(false);
 
-  const [formData, setFormData] = useState({
-    businessName: "",
-    industry: "",
-    name: "",
-    email: "",
-    phone: "",
-    monthlyRevenue: "",
-    monthlyLeads: "",
-  });
-
   /*
-   * Generate the next 7 calendar dates dynamically.
-   * This means the UI always stays current without hardcoded dates.
-   */
+  |--------------------------------------------------------------------------
+  | Generate next 7 calendar dates
+  |--------------------------------------------------------------------------
+  */
   const consultationDates = useMemo(() => {
     const dates = [];
-
     const today = new Date();
 
     for (let i = 0; i < 7; i++) {
@@ -116,6 +112,31 @@ const BookingPage = () => {
 
     return dates;
   }, []);
+
+  const [formData, setFormData] = useState({
+    businessName: "",
+    industry: "",
+    name: "",
+    email: "",
+    phone: "",
+    monthlyRevenue: "",
+    monthlyLeads: "",
+  });
+
+  /*
+  |--------------------------------------------------------------------------
+  | Automatically return home after successful confirmation
+  |--------------------------------------------------------------------------
+  */
+  useEffect(() => {
+    if (!confirmed) return;
+
+    const timer = setTimeout(() => {
+      navigate("/");
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [confirmed, navigate]);
 
   const formatDateValue = (date) => {
     const year = date.getFullYear();
@@ -143,6 +164,11 @@ const BookingPage = () => {
     }).format(date);
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Form Change
+  |--------------------------------------------------------------------------
+  */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -151,10 +177,6 @@ const BookingPage = () => {
       [name]: value,
     }));
 
-    /*
-     * Reset leads whenever revenue is changed so the user
-     * consciously selects the target after choosing revenue.
-     */
     if (name === "monthlyRevenue") {
       setFormData((prev) => ({
         ...prev,
@@ -164,6 +186,11 @@ const BookingPage = () => {
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Validation
+  |--------------------------------------------------------------------------
+  */
   const validateStep = () => {
     if (step === 1) {
       if (!formData.businessName.trim()) {
@@ -216,6 +243,11 @@ const BookingPage = () => {
     return true;
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Next Step
+  |--------------------------------------------------------------------------
+  */
   const nextStep = () => {
     if (!validateStep()) return;
 
@@ -224,6 +256,11 @@ const BookingPage = () => {
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Previous Step
+  |--------------------------------------------------------------------------
+  */
   const previousStep = () => {
     if (scanning || submitting) return;
 
@@ -231,11 +268,10 @@ const BookingPage = () => {
   };
 
   /*
-   * Assessment animation.
-   *
-   * The request is only sent after the scanning animation
-   * reaches 100%, so the user sees a clear transition.
-   */
+  |--------------------------------------------------------------------------
+  | Assessment Animation
+  |--------------------------------------------------------------------------
+  */
   const startAssessment = () => {
     if (!validateStep()) return;
 
@@ -249,6 +285,7 @@ const BookingPage = () => {
 
       if (progress >= 100) {
         progress = 100;
+
         clearInterval(interval);
 
         setScanProgress(100);
@@ -264,8 +301,10 @@ const BookingPage = () => {
   };
 
   /*
-   * Submit booking only after consultation date/time confirmation.
-   */
+  |--------------------------------------------------------------------------
+  | Confirm Consultation
+  |--------------------------------------------------------------------------
+  */
   const handleConfirmConsultation = async () => {
     if (!consultationDate) {
       toast.error("Please select a consultation date.");
@@ -282,27 +321,31 @@ const BookingPage = () => {
     try {
       const response = await fetch(`${API_URL}/api/bookings`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
+
         body: JSON.stringify({
           name: formData.name.trim(),
           email: formData.email.trim(),
+
           businessName: formData.businessName.trim(),
           industry: formData.industry,
+
           phone: formData.phone.trim(),
 
           monthlyRevenue: formData.monthlyRevenue,
           monthlyLeads: formData.monthlyLeads,
 
-          /*
-           * Preserve compatibility with your existing backend.
-           */
           website: "",
           location: "",
+
           service: "Growth Consultation",
+
           monthlyBudget: formData.monthlyRevenue,
+
           goals: `Business growth assessment. Current estimated monthly revenue: ${formData.monthlyRevenue}. Target lead increase per month: ${formData.monthlyLeads}. Consultation requested for ${consultationDate} at ${consultationTime}.`,
 
           consultationDate,
@@ -320,11 +363,15 @@ const BookingPage = () => {
 
       if (!response.ok) {
         throw new Error(
-          data?.message ||
-            "Unable to confirm your consultation."
+          data?.message || "Unable to confirm your consultation."
         );
       }
 
+      /*
+      |--------------------------------------------------------------------------
+      | Confirmation Success
+      |--------------------------------------------------------------------------
+      */
       setConfirmed(true);
 
       toast.success("Consultation confirmed!", {
@@ -345,6 +392,11 @@ const BookingPage = () => {
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Reset Booking
+  |--------------------------------------------------------------------------
+  */
   const resetBooking = () => {
     setStep(1);
     setSubmitting(false);
@@ -382,8 +434,10 @@ const BookingPage = () => {
   ];
 
   /*
-   * Final success screen
-   */
+  |--------------------------------------------------------------------------
+  | FINAL CONFIRMATION SCREEN
+  |--------------------------------------------------------------------------
+  */
   if (confirmed) {
     return (
       <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
@@ -391,10 +445,7 @@ const BookingPage = () => {
           <div className="w-full max-w-2xl text-center">
             <ScrollReveal direction="up">
               <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-lime-300/15">
-                <CheckCircle2
-                  size={52}
-                  className="text-lime-400"
-                />
+                <CheckCircle2 size={52} className="text-lime-400" />
               </div>
 
               <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-lime-500">
@@ -406,9 +457,8 @@ const BookingPage = () => {
               </h1>
 
               <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-gray-500 dark:text-gray-400">
-                Your growth consultation has been successfully
-                scheduled. We have your business information and
-                consultation preferences.
+                Your growth consultation has been successfully scheduled.
+                We have your business information and consultation preferences.
               </p>
 
               <div className="mx-auto mt-8 max-w-md rounded-3xl border border-gray-200 bg-gray-50 p-6 text-left dark:border-white/10 dark:bg-white/5">
@@ -421,6 +471,7 @@ const BookingPage = () => {
                     <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
                       Consultation
                     </p>
+
                     <p className="mt-1 font-semibold">
                       {consultationDate}
                     </p>
@@ -436,6 +487,7 @@ const BookingPage = () => {
                     <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
                       Time
                     </p>
+
                     <p className="mt-1 font-semibold">
                       {consultationTime}
                     </p>
@@ -443,9 +495,13 @@ const BookingPage = () => {
                 </div>
               </div>
 
+              <p className="mt-8 text-sm text-gray-400">
+                Redirecting you to the homepage...
+              </p>
+
               <button
                 onClick={() => navigate("/")}
-                className="mt-10 inline-flex items-center gap-2 rounded-full bg-lime-300 px-7 py-3.5 text-sm font-bold text-gray-900 transition duration-200 hover:bg-lime-200 hover:shadow-lg active:scale-[0.98]"
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-lime-300 px-7 py-3.5 text-sm font-bold text-gray-900 transition duration-200 hover:bg-lime-200 hover:shadow-lg active:scale-[0.98]"
               >
                 Back to Homepage
                 <ArrowRight size={17} />
@@ -458,8 +514,10 @@ const BookingPage = () => {
   }
 
   /*
-   * Assessment scanning screen
-   */
+  |--------------------------------------------------------------------------
+  | ASSESSMENT SCANNING SCREEN
+  |--------------------------------------------------------------------------
+  */
   if (scanning) {
     return (
       <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
@@ -484,13 +542,14 @@ const BookingPage = () => {
               </h1>
 
               <p className="mx-auto mt-4 max-w-lg leading-7 text-gray-500 dark:text-gray-400">
-                We're analyzing your business profile, trade,
-                revenue capacity and lead growth target.
+                We're analyzing your business profile, trade, revenue
+                capacity and lead growth target.
               </p>
 
               <div className="mt-10">
                 <div className="mb-3 flex items-center justify-between text-sm font-semibold">
                   <span>Assessment progress</span>
+
                   <span className="text-lime-500">
                     {scanProgress}%
                   </span>
@@ -513,8 +572,10 @@ const BookingPage = () => {
   }
 
   /*
-   * Assessment success → consultation scheduling
-   */
+  |--------------------------------------------------------------------------
+  | ASSESSMENT COMPLETE → CONSULTATION
+  |--------------------------------------------------------------------------
+  */
   if (assessmentComplete) {
     return (
       <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
@@ -538,8 +599,8 @@ const BookingPage = () => {
                 </h1>
 
                 <p className="mx-auto mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
-                  Choose a convenient date and time for your
-                  consultation with the LeadAxis team.
+                  Choose a convenient date and time for your consultation with
+                  the LeadAxis team.
                 </p>
               </div>
 
@@ -553,6 +614,7 @@ const BookingPage = () => {
                     <h2 className="font-semibold">
                       Select Consultation Date
                     </h2>
+
                     <p className="text-sm text-gray-500">
                       Choose a date from the next 7 days.
                     </p>
@@ -618,6 +680,7 @@ const BookingPage = () => {
                       <h2 className="font-semibold">
                         Select Consultation Time
                       </h2>
+
                       <p className="text-sm text-gray-500">
                         Choose your preferred time.
                       </p>
@@ -695,16 +758,21 @@ const BookingPage = () => {
     );
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | MAIN BOOKING FORM
+  |--------------------------------------------------------------------------
+  */
   return (
     <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
       <div className="flex min-h-screen">
+
         {/* LEFT PANEL */}
         <aside className="relative hidden w-[40%] overflow-hidden bg-[#101310] lg:flex">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(190,242,100,0.12),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(190,242,100,0.08),transparent_30%)]" />
 
           <div className="relative z-10 flex w-full flex-col justify-between p-10 xl:p-14">
             <div>
-              {/* Logo */}
               <button
                 type="button"
                 onClick={() => navigate("/")}
@@ -727,14 +795,12 @@ const BookingPage = () => {
                 </h1>
 
                 <p className="mt-6 max-w-md text-base leading-7 text-gray-400">
-                  Tell us where your business is today. We'll
-                  identify the opportunities, channels and
-                  strategies that can help you generate more
-                  qualified leads.
+                  Tell us where your business is today. We'll identify the
+                  opportunities, channels and strategies that can help you
+                  generate more qualified leads.
                 </p>
               </div>
 
-              {/* Benefits */}
               <div className="mt-12 space-y-5">
                 <div className="flex gap-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
@@ -747,8 +813,7 @@ const BookingPage = () => {
                     </h3>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Identify where competitors are capturing
-                      demand.
+                      Identify where competitors are capturing demand.
                     </p>
                   </div>
                 </div>
@@ -764,8 +829,7 @@ const BookingPage = () => {
                     </h3>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Build a strategy around your actual
-                      business goals.
+                      Build a strategy around your actual business goals.
                     </p>
                   </div>
                 </div>
@@ -781,20 +845,19 @@ const BookingPage = () => {
                     </h3>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      Focus on generating customers, not
-                      meaningless traffic.
+                      Focus on generating customers, not meaningless traffic.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Bottom */}
             <div className="flex items-center justify-between border-t border-white/10 pt-6">
               <div>
                 <p className="text-2xl font-bold text-white">
                   2.4M+
                 </p>
+
                 <p className="text-xs text-gray-500">
                   Service calls processed
                 </p>
@@ -804,6 +867,7 @@ const BookingPage = () => {
                 <p className="text-2xl font-bold text-white">
                   10K+
                 </p>
+
                 <p className="text-xs text-gray-500">
                   Business opportunities
                 </p>
@@ -814,7 +878,8 @@ const BookingPage = () => {
 
         {/* RIGHT PANEL */}
         <main className="flex min-h-screen w-full flex-col lg:w-[60%]">
-          {/* Mobile Header */}
+
+          {/* MOBILE HEADER */}
           <div className="flex items-center justify-between border-b border-gray-200 px-5 py-5 dark:border-white/10 lg:hidden">
             <button
               type="button"
@@ -835,7 +900,8 @@ const BookingPage = () => {
           </div>
 
           <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 py-8 sm:px-8 md:px-12 lg:px-16 lg:py-12 xl:px-20">
-            {/* Desktop Back */}
+
+            {/* DESKTOP BACK */}
             <button
               type="button"
               onClick={() => navigate("/")}
@@ -845,7 +911,7 @@ const BookingPage = () => {
               Back to homepage
             </button>
 
-            {/* Progress */}
+            {/* PROGRESS */}
             <div className="mb-12">
               <div className="flex items-center">
                 {steps.map((item, index) => (
@@ -903,7 +969,8 @@ const BookingPage = () => {
               }}
               className="flex-1"
             >
-              {/* STEP 1 — BUSINESS DETAILS */}
+
+              {/* STEP 1 */}
               {step === 1 && (
                 <ScrollReveal direction="up">
                   <div>
@@ -916,13 +983,13 @@ const BookingPage = () => {
                     </h2>
 
                     <p className="mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
-                      Start with your business or contractor
-                      information so we can understand what you
-                      do.
+                      Start with your business or contractor information so
+                      we can understand what you do.
                     </p>
 
                     <div className="mt-10 space-y-6">
-                      {/* Business Name */}
+
+                      {/* BUSINESS NAME */}
                       <div>
                         <label className="mb-2 block text-sm font-semibold">
                           Business / Contractor Name
@@ -946,7 +1013,7 @@ const BookingPage = () => {
                         </div>
                       </div>
 
-                      {/* Industry */}
+                      {/* MODERN TRADE SELECT */}
                       <div>
                         <label className="mb-2 block text-sm font-semibold">
                           Select Trade / Industry
@@ -962,9 +1029,37 @@ const BookingPage = () => {
                             name="industry"
                             value={formData.industry}
                             onChange={handleChange}
-                            className="w-full appearance-none rounded-2xl border border-gray-200 bg-gray-50 px-12 py-4 outline-none transition duration-200 focus:border-lime-400 focus:ring-4 focus:ring-lime-300/10 dark:border-white/10 dark:bg-white/5"
+                            className="
+                              w-full
+                              cursor-pointer
+                              appearance-none
+                              rounded-2xl
+                              border
+                              border-gray-200
+                              bg-gray-50
+                              px-12
+                              py-4
+                              pr-12
+                              text-sm
+                              font-medium
+                              text-gray-900
+                              outline-none
+                              transition-all
+                              duration-200
+                              hover:border-gray-300
+                              focus:border-lime-400
+                              focus:ring-4
+                              focus:ring-lime-300/10
+                              dark:border-white/10
+                              dark:bg-[#111512]
+                              dark:text-white
+                              dark:hover:border-white/20
+                            "
                           >
-                            <option value="">
+                            <option
+                              value=""
+                              className="bg-white text-gray-900 dark:bg-[#111512] dark:text-gray-400"
+                            >
                               Select trade / industry
                             </option>
 
@@ -972,19 +1067,30 @@ const BookingPage = () => {
                               <option
                                 key={trade}
                                 value={trade}
+                                className="bg-white text-gray-900 dark:bg-[#111512] dark:text-white"
                               >
                                 {trade}
                               </option>
                             ))}
                           </select>
+
+                          <ChevronDown
+                            size={18}
+                            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-transform"
+                          />
                         </div>
+
+                        <p className="mt-2 text-xs text-gray-400">
+                          Choose the service category that best matches your
+                          business.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </ScrollReveal>
               )}
 
-              {/* STEP 2 — CONTACT INFO */}
+              {/* STEP 2 */}
               {step === 2 && (
                 <ScrollReveal direction="up">
                   <div>
@@ -997,12 +1103,13 @@ const BookingPage = () => {
                     </h2>
 
                     <p className="mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
-                      Provide your contact details so our team
-                      can follow up about your consultation.
+                      Provide your contact details so our team can follow up
+                      about your consultation.
                     </p>
 
                     <div className="mt-10 space-y-6">
-                      {/* Full Name */}
+
+                      {/* NAME */}
                       <div>
                         <label className="mb-2 block text-sm font-semibold">
                           Full Name
@@ -1026,7 +1133,7 @@ const BookingPage = () => {
                         </div>
                       </div>
 
-                      {/* Business Email */}
+                      {/* EMAIL */}
                       <div>
                         <label className="mb-2 block text-sm font-semibold">
                           Business Email
@@ -1050,7 +1157,7 @@ const BookingPage = () => {
                         </div>
                       </div>
 
-                      {/* Phone */}
+                      {/* PHONE */}
                       <div>
                         <label className="mb-2 block text-sm font-semibold">
                           Phone Number
@@ -1078,7 +1185,7 @@ const BookingPage = () => {
                 </ScrollReveal>
               )}
 
-              {/* STEP 3 — GROWTH GOALS */}
+              {/* STEP 3 */}
               {step === 3 && (
                 <ScrollReveal direction="up">
                   <div>
@@ -1091,13 +1198,13 @@ const BookingPage = () => {
                     </h2>
 
                     <p className="mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
-                      We tailor your growth assessment based on
-                      your current revenue and operational volume
-                      capability.
+                      We tailor your growth assessment based on your current
+                      revenue and operational volume capability.
                     </p>
 
                     <div className="mt-10 space-y-8">
-                      {/* Monthly Revenue */}
+
+                      {/* REVENUE */}
                       <div>
                         <label className="mb-3 block text-sm font-semibold">
                           Current Estimated Monthly Revenue
@@ -1106,8 +1213,7 @@ const BookingPage = () => {
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           {REVENUE_OPTIONS.map((option) => {
                             const selected =
-                              formData.monthlyRevenue ===
-                              option;
+                              formData.monthlyRevenue === option;
 
                             return (
                               <button
@@ -1133,7 +1239,7 @@ const BookingPage = () => {
                         </div>
                       </div>
 
-                      {/* Target Leads — only after revenue */}
+                      {/* LEADS */}
                       {formData.monthlyRevenue && (
                         <div className="animate-[fadeIn_300ms_ease-out]">
                           <label className="mb-3 block text-sm font-semibold">
@@ -1143,8 +1249,7 @@ const BookingPage = () => {
                           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             {LEAD_OPTIONS.map((option) => {
                               const selected =
-                                formData.monthlyLeads ===
-                                option;
+                                formData.monthlyLeads === option;
 
                               return (
                                 <button
@@ -1170,7 +1275,7 @@ const BookingPage = () => {
                         </div>
                       )}
 
-                      {/* Summary */}
+                      {/* SUMMARY */}
                       {formData.monthlyRevenue &&
                         formData.monthlyLeads && (
                           <div className="rounded-2xl border border-lime-300/20 bg-lime-300/5 p-5">
@@ -1181,14 +1286,12 @@ const BookingPage = () => {
 
                               <div>
                                 <p className="font-semibold">
-                                  Your assessment is ready to
-                                  generate.
+                                  Your assessment is ready to generate.
                                 </p>
 
                                 <p className="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                                  We'll scan the information
-                                  you've provided and prepare
-                                  the next step for your
+                                  We'll scan the information you've provided
+                                  and prepare the next step for your
                                   consultation.
                                 </p>
                               </div>
