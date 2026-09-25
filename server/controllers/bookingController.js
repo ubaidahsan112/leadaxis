@@ -143,24 +143,19 @@ export const createBooking = async (req, res) => {
     | Send Email Notification
     |--------------------------------------------------------------------------
     */
-    try {
-      await sendBookingEmail(booking);
+  sendBookingEmail(booking)
+  .then(() => {
+    console.log("BOOKING EMAIL SENT SUCCESSFULLY");
+  })
+  .catch((emailError) => {
+    console.error("BOOKING EMAIL ERROR:", emailError);
+  });
 
-      console.log("BOOKING EMAIL SENT SUCCESSFULLY");
-    } catch (emailError) {
-      console.error("BOOKING EMAIL ERROR:", emailError);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Success Response
-    |--------------------------------------------------------------------------
-    */
-    return res.status(201).json({
-      success: true,
-      message: "Booking submitted successfully.",
-      booking,
-    });
+return res.status(201).json({
+  success: true,
+  message: "Booking submitted successfully.",
+  booking,
+});
   } catch (error) {
     console.error("CREATE BOOKING ERROR:", error);
 
