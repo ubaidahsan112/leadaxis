@@ -76,7 +76,7 @@ export const getDashboard = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error("Dashboard error:", error);
+    console.error("Dashboard error [v2]:", error);
     next(error);
   }
 };
