@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const AIChatbot = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
@@ -24,8 +26,7 @@ const AIChatbot = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content:
-        "Hi! 👋 I'm LeadAxis AI. How can I help you today?",
+      content: "Hi! 👋 I'm LeadAxis AI. How can I help you today?",
     },
   ]);
 
@@ -36,13 +37,10 @@ const AIChatbot = () => {
   */
   useEffect(() => {
     if (isOpen) {
-      // Small delay allows the browser to render the initial state
-      // before starting the opening animation.
       requestAnimationFrame(() => {
         setIsVisible(true);
       });
 
-      // Focus input on desktop only.
       if (window.innerWidth >= 640) {
         setTimeout(() => {
           inputRef.current?.focus();
@@ -89,7 +87,11 @@ const AIChatbot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      if (!API_URL) {
+        throw new Error("VITE_API_URL is not configured.");
+      }
+
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +103,19 @@ const AIChatbot = () => {
         }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        console.error("AI API returned non-JSON response:", responseText);
+
+        throw new Error(
+          `AI API returned invalid response. Status: ${response.status}`
+        );
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -162,7 +176,6 @@ const AIChatbot = () => {
   const closeChatbot = () => {
     setIsVisible(false);
 
-    // Wait for close animation before removing component.
     setTimeout(() => {
       setIsOpen(false);
     }, 250);
@@ -216,7 +229,6 @@ const AIChatbot = () => {
             fixed
             z-[999]
 
-            /* MOBILE */
             inset-x-0
             bottom-0
             flex
@@ -227,7 +239,6 @@ const AIChatbot = () => {
             rounded-t-[24px]
             bg-white
 
-            /* Desktop */
             sm:bottom-[88px]
             sm:right-6
             sm:left-auto
@@ -252,25 +263,19 @@ const AIChatbot = () => {
             }
           `}
         >
-          {/* =====================================================
-              MOBILE DRAG / CLOSE HANDLE
-          ===================================================== */}
+          {/* MOBILE HANDLE */}
 
           <div className="absolute left-1/2 top-2 z-20 -translate-x-1/2 sm:hidden">
             <div className="h-1 w-10 rounded-full bg-white/40" />
           </div>
 
-          {/* =====================================================
-              HEADER
-          ===================================================== */}
+          {/* HEADER */}
 
           <div className="relative shrink-0 overflow-hidden bg-[#0a0d0a] px-4 pb-4 pt-5 text-white sm:pt-4">
-            {/* Green glow */}
             <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-lime-300/20 blur-3xl" />
 
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {/* AI Icon */}
                 <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime-300 text-[#0a0d0a] shadow-lg shadow-lime-300/10">
                   <Bot size={23} strokeWidth={2.2} />
 
@@ -294,7 +299,6 @@ const AIChatbot = () => {
                 </div>
               </div>
 
-              {/* Close */}
               <button
                 type="button"
                 onClick={closeChatbot}
@@ -319,9 +323,7 @@ const AIChatbot = () => {
             </div>
           </div>
 
-          {/* =====================================================
-              MESSAGES
-          ===================================================== */}
+          {/* MESSAGES */}
 
           <div
             className="
@@ -338,7 +340,6 @@ const AIChatbot = () => {
               WebkitOverflowScrolling: "touch",
             }}
           >
-            {/* Welcome */}
             {messages.length === 1 && (
               <div className="mb-6 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-300 text-[#0a0d0a] shadow-sm">
@@ -351,7 +352,6 @@ const AIChatbot = () => {
               </div>
             )}
 
-            {/* Messages */}
             {messages.map((message, index) => {
               const isUser = message.role === "user";
 
@@ -359,9 +359,7 @@ const AIChatbot = () => {
                 <div
                   key={index}
                   className={`mb-3.5 flex ${
-                    isUser
-                      ? "justify-end"
-                      : "justify-start"
+                    isUser ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
@@ -369,7 +367,6 @@ const AIChatbot = () => {
                       isUser ? "flex-row-reverse" : ""
                     }`}
                   >
-                    {/* Avatar */}
                     <div
                       className={`
                         flex
@@ -393,7 +390,6 @@ const AIChatbot = () => {
                       )}
                     </div>
 
-                    {/* Message */}
                     <div
                       className={`
                         rounded-2xl
@@ -416,7 +412,6 @@ const AIChatbot = () => {
               );
             })}
 
-            {/* Loading */}
             {isLoading && (
               <div className="mb-3.5 flex justify-start">
                 <div className="flex items-end gap-2">
@@ -441,9 +436,7 @@ const AIChatbot = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* =====================================================
-              QUICK QUESTIONS
-          ===================================================== */}
+          {/* QUICK QUESTIONS */}
 
           {messages.length === 1 && (
             <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-3">
@@ -484,9 +477,7 @@ const AIChatbot = () => {
             </div>
           )}
 
-          {/* =====================================================
-              BOOKING CTA
-          ===================================================== */}
+          {/* BOOKING CTA */}
 
           <button
             type="button"
@@ -525,9 +516,7 @@ const AIChatbot = () => {
             Book a Consultation
           </button>
 
-          {/* =====================================================
-              INPUT
-          ===================================================== */}
+          {/* INPUT */}
 
           <form
             onSubmit={handleSubmit}
@@ -614,9 +603,7 @@ const AIChatbot = () => {
         </div>
       )}
 
-      {/* =====================================================
-          FLOATING AI BUTTON
-      ===================================================== */}
+      {/* FLOATING AI BUTTON */}
 
       <button
         type="button"
@@ -628,9 +615,7 @@ const AIChatbot = () => {
           }
         }}
         aria-label={
-          isOpen
-            ? "Close LeadAxis AI"
-            : "Open LeadAxis AI"
+          isOpen ? "Close LeadAxis AI" : "Open LeadAxis AI"
         }
         className="
           fixed
@@ -659,13 +644,8 @@ const AIChatbot = () => {
           sm:right-6
         "
       >
-        {isOpen ? (
-          <X size={22} />
-        ) : (
-          <Bot size={23} />
-        )}
+        {isOpen ? <X size={22} /> : <Bot size={23} />}
 
-        {/* Online indicator */}
         {!isOpen && (
           <span className="absolute right-0.5 top-0.5 flex h-3.5 w-3.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-300 opacity-60" />
