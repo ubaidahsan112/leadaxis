@@ -13,6 +13,18 @@ import toast from "react-hot-toast";
 
 import AdminSidebar from "../../Components/AdminSidebar";
 
+/* -------------------------------------------------------
+   API
+------------------------------------------------------- */
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://leadaxis-production.up.railway.app";
+
+/* -------------------------------------------------------
+   Admin Leads
+------------------------------------------------------- */
+
 const AdminLeads = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +66,10 @@ const AdminLeads = () => {
       "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400",
   };
 
+  /* -------------------------------------------------------
+     Fetch Leads
+  ------------------------------------------------------- */
+
   const fetchLeads = useCallback(
     async (showRefresh = false) => {
       try {
@@ -65,7 +81,11 @@ const AdminLeads = () => {
 
         setError("");
 
-        const response = await fetch("/api/bookings", {
+        const url = `${API_URL}/api/bookings`;
+
+        console.log("Fetching leads from:", url);
+
+        const response = await fetch(url, {
           method: "GET",
           headers: {
             Accept: "application/json",
@@ -84,7 +104,17 @@ const AdminLeads = () => {
 
         try {
           data = JSON.parse(responseText);
-        } catch {
+        } catch (parseError) {
+          console.error(
+            "Leads JSON parse error:",
+            parseError
+          );
+
+          console.error(
+            "Leads API response:",
+            responseText
+          );
+
           throw new Error(
             "Leads API returned invalid JSON."
           );
@@ -97,7 +127,13 @@ const AdminLeads = () => {
           );
         }
 
-        setLeads(Array.isArray(data.bookings) ? data.bookings : []);
+        const bookings = Array.isArray(data.bookings)
+          ? data.bookings
+          : [];
+
+        console.log("Leads received:", bookings);
+
+        setLeads(bookings);
       } catch (err) {
         console.error("Leads fetch error:", err);
 
@@ -113,6 +149,10 @@ const AdminLeads = () => {
     []
   );
 
+  /* -------------------------------------------------------
+     Initial Load + Auto Refresh
+  ------------------------------------------------------- */
+
   useEffect(() => {
     fetchLeads();
 
@@ -122,6 +162,10 @@ const AdminLeads = () => {
 
     return () => clearInterval(interval);
   }, [fetchLeads]);
+
+  /* -------------------------------------------------------
+     Filter Leads
+  ------------------------------------------------------- */
 
   const filteredLeads = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
@@ -155,12 +199,16 @@ const AdminLeads = () => {
     });
   }, [leads, search, statusFilter]);
 
+  /* -------------------------------------------------------
+     Update Status
+  ------------------------------------------------------- */
+
   const updateStatus = async (id, status) => {
     try {
       setUpdatingId(id);
 
       const response = await fetch(
-        `/api/bookings/${id}`,
+        `${API_URL}/api/bookings/${id}`,
         {
           method: "PATCH",
           headers: {
@@ -171,7 +219,23 @@ const AdminLeads = () => {
         }
       );
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      if (!responseText.trim()) {
+        throw new Error(
+          "Status update API returned an empty response."
+        );
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          "Status update API returned invalid JSON."
+        );
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -206,6 +270,10 @@ const AdminLeads = () => {
     }
   };
 
+  /* -------------------------------------------------------
+     Delete Lead
+  ------------------------------------------------------- */
+
   const deleteLead = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to permanently delete this lead?"
@@ -219,7 +287,7 @@ const AdminLeads = () => {
       setDeletingId(id);
 
       const response = await fetch(
-        `/api/bookings/${id}`,
+        `${API_URL}/api/bookings/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -228,7 +296,23 @@ const AdminLeads = () => {
         }
       );
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      if (!responseText.trim()) {
+        throw new Error(
+          "Delete API returned an empty response."
+        );
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          "Delete API returned invalid JSON."
+        );
+      }
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -261,6 +345,10 @@ const AdminLeads = () => {
     }
   };
 
+  /* -------------------------------------------------------
+     Date Formatting
+  ------------------------------------------------------- */
+
   const formatDate = (date) => {
     if (!date) {
       return "—";
@@ -282,6 +370,10 @@ const AdminLeads = () => {
     );
   };
 
+  /* -------------------------------------------------------
+     Time Formatting
+  ------------------------------------------------------- */
+
   const formatTime = (date) => {
     if (!date) {
       return "";
@@ -301,6 +393,10 @@ const AdminLeads = () => {
       }
     );
   };
+
+  /* -------------------------------------------------------
+     Render
+  ------------------------------------------------------- */
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-[#080a08] dark:text-white">
@@ -796,6 +892,12 @@ const AdminLeads = () => {
 
                             <p className="mt-1 text-sm">
                               {formatDate(
+                                lead.created_at
+                              )}
+                            </p>
+
+                            <p className="mt-1 text-xs text-gray-400">
+                              {formatTime(
                                 lead.created_at
                               )}
                             </p>
