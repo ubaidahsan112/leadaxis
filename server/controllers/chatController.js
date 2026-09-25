@@ -99,15 +99,13 @@ Respond naturally as LeadAxis AI.
       reply: reply.trim(),
     });
   } catch (error) {
-    console.error("GEMINI CHAT ERROR:", error);
+  console.error("GEMINI CHAT ERROR:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Unable to connect to the AI assistant.",
-      error:
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : undefined,
-    });
-  }
+  return res.status(500).json({
+    success: false,
+    message: "Unable to connect to the AI assistant.",
+    error: error?.message || String(error),
+  });
+}
 };
+
