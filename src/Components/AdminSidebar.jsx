@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   BriefcaseBusiness,
@@ -9,10 +9,12 @@ import {
   Menu,
   X,
   Leaf,
+  LogOut,
 } from "lucide-react";
 
 const AdminSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const menuItems = [
@@ -46,6 +48,16 @@ const AdminSidebar = () => {
     return location.pathname.startsWith(path);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("adminAuthenticated");
+
+    setMobileOpen(false);
+
+    navigate("/admin/login", {
+      replace: true,
+    });
+  };
+
   return (
     <>
       {/* Mobile Header */}
@@ -65,6 +77,7 @@ const AdminSidebar = () => {
         </Link>
 
         <button
+          type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
           className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-700 transition hover:bg-gray-100 dark:border-white/10 dark:text-white dark:hover:bg-white/5"
         >
@@ -75,6 +88,7 @@ const AdminSidebar = () => {
       {/* Mobile Overlay */}
       {mobileOpen && (
         <button
+          type="button"
           aria-label="Close sidebar"
           onClick={() => setMobileOpen(false)}
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -102,7 +116,7 @@ const AdminSidebar = () => {
 
             <div>
               <h1 className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
-                Lead<span className="text-lime-300 ">Axis</span>
+                Lead<span className="text-lime-300">Axis</span>
               </h1>
 
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400">
@@ -113,6 +127,7 @@ const AdminSidebar = () => {
 
           {/* Mobile Close */}
           <button
+            type="button"
             onClick={() => setMobileOpen(false)}
             className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 lg:hidden"
           >
@@ -179,7 +194,7 @@ const AdminSidebar = () => {
                 <Leaf size={18} />
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-bold text-gray-900 dark:text-white">
                   LeadAxis Admin
                 </p>
@@ -189,6 +204,16 @@ const AdminSidebar = () => {
                 </p>
               </div>
             </div>
+
+            {/* Logout */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/20 dark:bg-white/[0.02] dark:text-red-400 dark:hover:bg-red-500/10"
+            >
+              <LogOut size={17} />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </aside>
