@@ -3,7 +3,6 @@ import { Toaster } from "react-hot-toast";
 
 import Navbar from "./Components/Navbar";
 import AIChatbot from "./Components/AIChatbot";
-import FairyCursor from "./Components/FairyCursor";
 import ProtectedRoute from "./Components/ProtectedRoute";
 
 import Home from "./Pages/Home";
@@ -19,10 +18,6 @@ import AdminLeadDetail from "./Pages/Admin/AdminLeadDetail";
 const App = () => {
   return (
     <>
-      {/* Custom Fairy Cursor */}
-      <FairyCursor />
-
-      {/* Toast Notifications */}
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -37,9 +32,7 @@ const App = () => {
       />
 
       <Routes>
-        {/* =========================
-            PUBLIC WEBSITE
-        ========================= */}
+        {/* Public Website */}
 
         <Route
           path="/"
@@ -56,18 +49,14 @@ const App = () => {
           element={<BookingPage />}
         />
 
-        {/* =========================
-            ADMIN LOGIN
-        ========================= */}
+        {/* Admin Login */}
 
         <Route
           path="/admin/login"
           element={<AdminLogin />}
         />
 
-        {/* =========================
-            PROTECTED ADMIN ROUTES
-        ========================= */}
+        {/* Protected Admin Routes */}
 
         <Route element={<ProtectedRoute />}>
           <Route
@@ -101,15 +90,13 @@ const App = () => {
           />
         </Route>
 
-        {/* =========================
-            404
-        ========================= */}
+        {/* 404 */}
 
         <Route
           path="*"
           element={
             <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#080a08]">
-              <div className="px-6 text-center">
+              <div className="text-center">
                 <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
                   404
                 </h1>
