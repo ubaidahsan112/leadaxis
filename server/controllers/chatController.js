@@ -3,7 +3,8 @@ import leadaxisKnowledge from "../knowledge/leadaxisKnowledge.js";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
-const GEMINI_MODEL = "gemini-3.8-flash";
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
+
 
 console.log("=================================");
 console.log("LeadAxis AI Configuration");
