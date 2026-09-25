@@ -104,7 +104,7 @@ Respond naturally as LeadAxis AI.
   return res.status(500).json({
     success: false,
     message: "Unable to connect to the AI assistant.",
-    error: error?.message || String(error),
+    error: error?.message || "Unknown Gemini error",
   });
 }
 };
