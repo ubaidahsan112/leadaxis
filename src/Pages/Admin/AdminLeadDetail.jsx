@@ -23,6 +23,12 @@ import toast from "react-hot-toast";
 import AdminSidebar from "../../Components/AdminSidebar";
 
 /* -------------------------------------------------------
+   API
+------------------------------------------------------- */
+
+const API_URL = import.meta.env.VITE_API_URL || "";
+
+/* -------------------------------------------------------
    Reusable Information Item
 ------------------------------------------------------- */
 
@@ -113,7 +119,7 @@ const AdminLeadDetails = () => {
 
         setError("");
 
-        const response = await fetch(`/api/bookings/${id}`, {
+        const response = await fetch(`${API_URL}/api/bookings/${id}`, {
           method: "GET",
           headers: {
             Accept: "application/json",
@@ -178,7 +184,7 @@ const AdminLeadDetails = () => {
     try {
       setUpdating(true);
 
-      const response = await fetch(`/api/bookings/${lead.id}`, {
+      const response = await fetch(`${API_URL}/api/bookings/${lead.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -192,9 +198,7 @@ const AdminLeadDetails = () => {
       const responseText = await response.text();
 
       if (!responseText.trim()) {
-        throw new Error(
-          "Status update API returned an empty response."
-        );
+        throw new Error("Status update API returned an empty response.");
       }
 
       let data;
@@ -202,18 +206,13 @@ const AdminLeadDetails = () => {
       try {
         data = JSON.parse(responseText);
       } catch {
-        throw new Error(
-          "Status update API returned invalid JSON."
-        );
+        throw new Error("Status update API returned invalid JSON.");
       }
 
       if (!response.ok || !data.success) {
-        throw new Error(
-          data?.message || "Failed to update status."
-        );
+        throw new Error(data?.message || "Failed to update status.");
       }
 
-      /* Use the actual database record returned by API */
       setLead(data.booking);
 
       toast.success("Lead status updated successfully.");
@@ -246,7 +245,7 @@ const AdminLeadDetails = () => {
     try {
       setDeleting(true);
 
-      const response = await fetch(`/api/bookings/${lead.id}`, {
+      const response = await fetch(`${API_URL}/api/bookings/${lead.id}`, {
         method: "DELETE",
         headers: {
           Accept: "application/json",
@@ -268,9 +267,7 @@ const AdminLeadDetails = () => {
       }
 
       if (!response.ok || !data.success) {
-        throw new Error(
-          data?.message || "Failed to delete lead."
-        );
+        throw new Error(data?.message || "Failed to delete lead.");
       }
 
       toast.success("Lead deleted successfully.");
@@ -329,15 +326,35 @@ const AdminLeadDetails = () => {
   };
 
   /* -------------------------------------------------------
+     Consultation Date Formatting
+  ------------------------------------------------------- */
+
+  const formatConsultationDate = (date) => {
+    if (!date) {
+      return "—";
+    }
+
+    const parsedDate = new Date(`${date}T00:00:00`);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return date;
+    }
+
+    return parsedDate.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  /* -------------------------------------------------------
      Render
   ------------------------------------------------------- */
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-[#080a08] dark:text-white">
-      {/* Shared Admin Sidebar */}
       <AdminSidebar />
 
-      {/* Main Content */}
       <div className="lg:pl-[260px]">
         {/* Topbar */}
         <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#080a08]/90">
@@ -362,7 +379,6 @@ const AdminLeadDetails = () => {
               </div>
             </div>
 
-            {/* Actions */}
             {lead && (
               <div className="flex items-center gap-2">
                 <button
@@ -376,9 +392,7 @@ const AdminLeadDetails = () => {
                     className={refreshing ? "animate-spin" : ""}
                   />
 
-                  <span className="hidden sm:inline">
-                    Refresh
-                  </span>
+                  <span className="hidden sm:inline">Refresh</span>
                 </button>
 
                 <button
@@ -389,9 +403,7 @@ const AdminLeadDetails = () => {
                 >
                   <Trash2 size={16} />
 
-                  <span className="hidden sm:inline">
-                    Delete
-                  </span>
+                  <span className="hidden sm:inline">Delete</span>
                 </button>
               </div>
             )}
@@ -400,31 +412,23 @@ const AdminLeadDetails = () => {
 
         {/* Page Content */}
         <main className="mx-auto max-w-[1400px] px-5 py-7 sm:px-8 sm:py-9">
-          {/* Loading */}
           {loading ? (
             <div className="space-y-5">
               <div className="h-36 animate-pulse rounded-2xl bg-gray-200 dark:bg-white/5" />
 
               <div className="grid gap-5 xl:grid-cols-3">
                 <div className="h-80 animate-pulse rounded-2xl bg-gray-200 dark:bg-white/5" />
-
                 <div className="h-80 animate-pulse rounded-2xl bg-gray-200 dark:bg-white/5" />
-
                 <div className="h-80 animate-pulse rounded-2xl bg-gray-200 dark:bg-white/5" />
               </div>
 
               <div className="h-52 animate-pulse rounded-2xl bg-gray-200 dark:bg-white/5" />
             </div>
           ) : error ? (
-            /* Error */
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700 dark:border-red-500/20 dark:bg-red-500/5 dark:text-red-400">
-              <p className="font-semibold">
-                Unable to load lead
-              </p>
+              <p className="font-semibold">Unable to load lead</p>
 
-              <p className="mt-2 text-sm">
-                {error}
-              </p>
+              <p className="mt-2 text-sm">{error}</p>
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <button
@@ -446,15 +450,11 @@ const AdminLeadDetails = () => {
               </div>
             </div>
           ) : !lead ? (
-            /* Not Found */
             <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center dark:border-white/10 dark:bg-[#101310]">
-              <h3 className="font-bold">
-                Lead not found
-              </h3>
+              <h3 className="font-bold">Lead not found</h3>
 
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                This lead may have been deleted or does not
-                exist.
+                This lead may have been deleted or does not exist.
               </p>
 
               <Link
@@ -470,7 +470,6 @@ const AdminLeadDetails = () => {
               {/* Lead Header */}
               <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#101310] sm:p-7">
                 <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-                  {/* Identity */}
                   <div className="flex min-w-0 items-center gap-4">
                     <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-lime-100 text-lg font-bold text-lime-700 dark:bg-lime-300/10 dark:text-lime-300">
                       {lead.name
@@ -495,7 +494,6 @@ const AdminLeadDetails = () => {
                     </div>
                   </div>
 
-                  {/* Status */}
                   <div className="flex flex-wrap items-center gap-3">
                     <span
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
@@ -532,9 +530,7 @@ const AdminLeadDetails = () => {
               <div className="mt-5 grid gap-5 xl:grid-cols-3">
                 {/* Contact Information */}
                 <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#101310] sm:p-6">
-                  <h3 className="font-bold">
-                    Contact Information
-                  </h3>
+                  <h3 className="font-bold">Contact Information</h3>
 
                   <div className="mt-6 space-y-5">
                     <InfoItem
@@ -582,9 +578,7 @@ const AdminLeadDetails = () => {
 
                 {/* Campaign Information */}
                 <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#101310] sm:p-6">
-                  <h3 className="font-bold">
-                    Campaign Information
-                  </h3>
+                  <h3 className="font-bold">Campaign Information</h3>
 
                   <div className="mt-6 space-y-5">
                     <InfoItem
@@ -615,9 +609,7 @@ const AdminLeadDetails = () => {
 
                 {/* Timeline */}
                 <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#101310] sm:p-6">
-                  <h3 className="font-bold">
-                    Timeline
-                  </h3>
+                  <h3 className="font-bold">Timeline</h3>
 
                   <div className="mt-6 space-y-6">
                     <div className="flex gap-3">
@@ -663,6 +655,41 @@ const AdminLeadDetails = () => {
                 </section>
               </div>
 
+              {/* Consultation */}
+              <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#101310] sm:p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-100 text-lime-700 dark:bg-lime-300/10 dark:text-lime-300">
+                    <CalendarDays size={18} />
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold">
+                      Consultation Schedule
+                    </h3>
+
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Date and time selected by the prospect
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <InfoItem
+                    icon={CalendarDays}
+                    label="Consultation Date"
+                    value={formatConsultationDate(
+                      lead.consultation_date
+                    )}
+                  />
+
+                  <InfoItem
+                    icon={Clock}
+                    label="Consultation Time"
+                    value={lead.consultation_time}
+                  />
+                </div>
+              </section>
+
               {/* Goals */}
               <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#101310] sm:p-6">
                 <div className="flex items-center gap-3">
@@ -671,9 +698,7 @@ const AdminLeadDetails = () => {
                   </div>
 
                   <div>
-                    <h3 className="font-bold">
-                      Lead Goals
-                    </h3>
+                    <h3 className="font-bold">Lead Goals</h3>
 
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Information submitted by the prospect
