@@ -80,35 +80,19 @@ ${message.trim()}
 Respond naturally as LeadAxis AI.
 `;
 
-    const models = [
-      "gemini-3.8-flash",
-      "gemini-3.5-flash-lite",
-    ];
-
-    let response = null;
-    let lastError = null;
-
-    for (const model of models) {
-      try {
-        response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-        });
-
-        if (response) break;
-      } catch (error) {
-        console.error(`Gemini model ${model} failed:`, error);
-        lastError = error;
-      }
-    }
-
-    if (!response) {
-      throw lastError || new Error("No Gemini response.");
-    }
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
 
     const reply =
-      response.text ||
-      "Sorry, I couldn't generate a response right now.";
+      typeof response.text === "function"
+        ? response.text()
+        : response.text;
+
+    if (!reply) {
+      throw new Error("Gemini returned an empty response.");
+    }
 
     return res.status(200).json({
       success: true,
@@ -120,6 +104,10 @@ Respond naturally as LeadAxis AI.
     return res.status(500).json({
       success: false,
       message: "Unable to connect to the AI assistant.",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 };
