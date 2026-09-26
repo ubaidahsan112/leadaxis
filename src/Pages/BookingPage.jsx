@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,44 +19,68 @@ import {
   Loader2,
   ChevronDown,
 } from "lucide-react";
-import toast from "react-hot-toast";
 
+import toast from "react-hot-toast";
 import ScrollReveal from "../Components/ScrollReveal";
-import LoadingScreen from "../Components/LoadingScreen";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+const TRADE_OPTIONS = [
+  "Plumbing",
+  "HVAC",
+  "Roofing",
+  "Electrical",
+  "Moving",
+  "Painting",
+  "Pest Control",
+  "Flooring",
+  "Windows & Doors",
+  "Home Remodeling",
+  "Landscaping",
+  "Solar",
+  "Cleaning",
+  "Garage Doors",
+  "Water Damage",
+  "Junk Removal",
+  "Tree Service",
+  "Concrete",
+  "Fencing",
+  "Pool Services",
+  "Appliance Repair",
+  "Locksmith",
+  "Real Estate",
+  "Legal Services",
+  "Other",
+];
+
 const REVENUE_OPTIONS = [
-  "$0 - $100K",
-  "$100K - $500K",
-  "$500K - $1M",
-  "$1M - $5M",
-  "$5M+",
+  "Under $25k",
+  "$25k - $50k",
+  "$50k - $100k",
+  "$100k+",
 ];
 
 const LEAD_OPTIONS = [
-  "10 - 25 leads/month",
-  "25 - 50 leads/month",
-  "50 - 100 leads/month",
-  "100 - 250 leads/month",
-  "250+ leads/month",
+  "Under 20",
+  "20 - 50",
+  "50 - 100",
+  "100+",
+];
+
+const TIME_OPTIONS = [
+  "9:00 AM",
+  "10:00 AM",
+  "1:00 PM",
+  "2:00 PM",
+  "4:00 PM",
+  "6:00 PM",
+  "8:00 PM",
 ];
 
 const BookingPage = () => {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
-
-  const [formData, setFormData] = useState({
-    businessName: "",
-    businessType: "",
-    name: "",
-    email: "",
-    phone: "",
-    revenue: "",
-    leads: "",
-  });
-
   const [submitting, setSubmitting] = useState(false);
 
   const [scanning, setScanning] = useState(false);
@@ -67,63 +92,133 @@ const BookingPage = () => {
 
   const [confirmed, setConfirmed] = useState(false);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Generate next 7 calendar dates
+  |--------------------------------------------------------------------------
+  */
   const consultationDates = useMemo(() => {
     const dates = [];
+    const today = new Date();
 
-    for (let i = 1; i <= 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
 
-      dates.push({
-        value: date.toISOString().split("T")[0],
-        day: date.toLocaleDateString("en-US", {
-          weekday: "short",
-        }),
-        date: date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-      });
+      date.setHours(0, 0, 0, 0);
+      date.setDate(today.getDate() + i);
+
+      dates.push(date);
     }
 
     return dates;
   }, []);
 
-  const updateField = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const [formData, setFormData] = useState({
+    businessName: "",
+    industry: "",
+    name: "",
+    email: "",
+    phone: "",
+    monthlyRevenue: "",
+    monthlyLeads: "",
+  });
+
+  /*
+  |--------------------------------------------------------------------------
+  | Automatically return home after successful confirmation
+  |--------------------------------------------------------------------------
+  */
+  useEffect(() => {
+    if (!confirmed) return;
+
+    const timer = setTimeout(() => {
+      navigate("/");
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [confirmed, navigate]);
+
+  const formatDateValue = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
   };
 
+  const formatDay = (date) => {
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+    }).format(date);
+  };
+
+  const formatDateNumber = (date) => {
+    return new Intl.DateTimeFormat("en-US", {
+      day: "numeric",
+    }).format(date);
+  };
+
+  const formatMonth = (date) => {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+    }).format(date);
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Form Change
+  |--------------------------------------------------------------------------
+  */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name === "monthlyRevenue") {
+      setFormData((prev) => ({
+        ...prev,
+        monthlyRevenue: value,
+        monthlyLeads: "",
+      }));
+    }
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Validation
+  |--------------------------------------------------------------------------
+  */
   const validateStep = () => {
     if (step === 1) {
       if (!formData.businessName.trim()) {
-        toast.error("Please enter your business name.");
+        toast.error("Please enter your business or contractor name.");
         return false;
       }
 
-      if (!formData.businessType.trim()) {
-        toast.error("Please enter your business type.");
+      if (!formData.industry) {
+        toast.error("Please select your trade or industry.");
         return false;
       }
     }
 
     if (step === 2) {
       if (!formData.name.trim()) {
-        toast.error("Please enter your name.");
+        toast.error("Please enter your full name.");
         return false;
       }
 
       if (!formData.email.trim()) {
-        toast.error("Please enter your email.");
+        toast.error("Please enter your business email.");
         return false;
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      if (!emailRegex.test(formData.email)) {
-        toast.error("Please enter a valid email.");
+      if (!emailRegex.test(formData.email.trim())) {
+        toast.error("Please enter a valid business email.");
         return false;
       }
 
@@ -134,13 +229,13 @@ const BookingPage = () => {
     }
 
     if (step === 3) {
-      if (!formData.revenue) {
-        toast.error("Please select your annual revenue.");
+      if (!formData.monthlyRevenue) {
+        toast.error("Please select your current monthly revenue.");
         return false;
       }
 
-      if (!formData.leads) {
-        toast.error("Please select your current lead volume.");
+      if (!formData.monthlyLeads) {
+        toast.error("Please select your target lead increase.");
         return false;
       }
     }
@@ -148,22 +243,35 @@ const BookingPage = () => {
     return true;
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Next Step
+  |--------------------------------------------------------------------------
+  */
   const nextStep = () => {
     if (!validateStep()) return;
 
     if (step < 3) {
       setStep((prev) => prev + 1);
-    } else {
-      startAssessment();
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Previous Step
+  |--------------------------------------------------------------------------
+  */
   const previousStep = () => {
-    if (step > 1 && !scanning && !submitting) {
-      setStep((prev) => prev - 1);
-    }
+    if (scanning || submitting) return;
+
+    setStep((prev) => Math.max(prev - 1, 1));
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Assessment Animation
+  |--------------------------------------------------------------------------
+  */
   const startAssessment = () => {
     if (!validateStep()) return;
 
@@ -192,6 +300,11 @@ const BookingPage = () => {
     }, 100);
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Confirm Consultation
+  |--------------------------------------------------------------------------
+  */
   const handleConfirmConsultation = async () => {
     if (!consultationDate) {
       toast.error("Please select a consultation date.");
@@ -203,50 +316,87 @@ const BookingPage = () => {
       return;
     }
 
+    setSubmitting(true);
+
     try {
-      setSubmitting(true);
+      const response = await fetch(`${API_URL}/api/bookings`, {
+        method: "POST",
 
-      const payload = {
-        businessName: formData.businessName,
-        businessType: formData.businessType,
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        revenue: formData.revenue,
-        leads: formData.leads,
-        consultationDate,
-        consultationTime,
-      };
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
 
-      if (API_URL) {
-        const response = await fetch(`${API_URL}/api/bookings`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
 
-        if (!response.ok) {
-          throw new Error("Booking request failed.");
-        }
+          businessName: formData.businessName.trim(),
+          industry: formData.industry,
+
+          phone: formData.phone.trim(),
+
+          monthlyRevenue: formData.monthlyRevenue,
+          monthlyLeads: formData.monthlyLeads,
+
+          website: "",
+          location: "",
+
+          service: "Growth Consultation",
+
+          monthlyBudget: formData.monthlyRevenue,
+
+          goals: `Business growth assessment. Current estimated monthly revenue: ${formData.monthlyRevenue}. Target lead increase per month: ${formData.monthlyLeads}. Consultation requested for ${consultationDate} at ${consultationTime}.`,
+
+          consultationDate,
+          consultationTime,
+        }),
+      });
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
       }
 
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Unable to confirm your consultation."
+        );
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Confirmation Success
+      |--------------------------------------------------------------------------
+      */
       setConfirmed(true);
 
-      toast.success("Consultation confirmed!");
-
-      setTimeout(() => {
-        navigate("/");
-      }, 5000);
+      toast.success("Consultation confirmed!", {
+        duration: 5000,
+      });
     } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong. Please try again.");
+      console.error("Booking submission error:", error);
+
+      toast.error(
+        error?.message ||
+          "We couldn't confirm your consultation. Please try again.",
+        {
+          duration: 5000,
+        }
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Reset Booking
+  |--------------------------------------------------------------------------
+  */
   const resetBooking = () => {
     setStep(1);
     setSubmitting(false);
@@ -259,190 +409,121 @@ const BookingPage = () => {
 
     setFormData({
       businessName: "",
-      businessType: "",
+      industry: "",
       name: "",
       email: "",
       phone: "",
-      revenue: "",
-      leads: "",
+      monthlyRevenue: "",
+      monthlyLeads: "",
     });
   };
 
-  /*
-   * SAME SIDEBAR USED THROUGHOUT BOOKING / ASSESSMENT
-   */
-  const BookingSidebar = () => {
-    return (
-      <aside className="relative hidden w-[40%] overflow-hidden bg-[#101310] lg:flex">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(190,242,100,0.12),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(190,242,100,0.08),transparent_30%)]" />
-
-        <div className="relative z-10 flex w-full flex-col justify-between p-10 xl:p-14">
-          <div>
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="text-2xl font-black tracking-tight text-white"
-            >
-              Lead<span className="text-lime-300">Axis</span>
-            </button>
-
-            <div className="mt-20 max-w-lg">
-              <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">
-                Exclusive Growth Consultation
-              </p>
-
-              <h1 className="text-4xl font-bold leading-tight text-white xl:text-5xl">
-                Unlock your custom
-                <span className="text-lime-300"> growth roadmap.</span>
-              </h1>
-
-              <p className="mt-6 max-w-md text-base leading-7 text-gray-400">
-                Tell us where your business is today. We'll identify the
-                opportunities, channels and strategies that can help you
-                generate more qualified leads.
-              </p>
-            </div>
-
-            <div className="mt-12 space-y-5">
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
-                  <Target size={19} />
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-white">
-                    Competitor Opportunity
-                  </h3>
-
-                  <p className="mt-1 text-sm text-gray-500">
-                    Identify where competitors are capturing demand.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
-                  <TrendingUp size={19} />
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-white">
-                    Growth Playbook
-                  </h3>
-
-                  <p className="mt-1 text-sm text-gray-500">
-                    Build a strategy around your actual business goals.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
-                  <Users size={19} />
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-white">
-                    Qualified Leads
-                  </h3>
-
-                  <p className="mt-1 text-sm text-gray-500">
-                    Focus on generating customers, not meaningless traffic.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between border-t border-white/10 pt-6">
-            <div>
-              <p className="text-2xl font-bold text-white">2.4M+</p>
-              <p className="text-xs text-gray-500">
-                Service calls processed
-              </p>
-            </div>
-
-            <div>
-              <p className="text-2xl font-bold text-white">10K+</p>
-              <p className="text-xs text-gray-500">
-                Business opportunities
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
-    );
-  };
+  const steps = [
+    {
+      number: 1,
+      title: "Business Details",
+    },
+    {
+      number: 2,
+      title: "Contact Info",
+    },
+    {
+      number: 3,
+      title: "Growth Goals",
+    },
+  ];
 
   /*
-   * CONFIRMED SCREEN
-   */
+  |--------------------------------------------------------------------------
+  | FINAL CONFIRMATION SCREEN
+  |--------------------------------------------------------------------------
+  */
   if (confirmed) {
     return (
-      <div className="min-h-screen bg-[#0b0d0b] text-white">
-        <div className="flex min-h-screen items-center justify-center px-6">
-          <ScrollReveal>
-            <div className="w-full max-w-xl text-center">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-lime-300/10">
-                <CheckCircle2
-                  size={52}
-                  className="text-lime-300"
-                />
+      <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
+        <div className="flex min-h-screen items-center justify-center px-5 py-12">
+          <div className="w-full max-w-2xl text-center">
+            <ScrollReveal direction="up">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-lime-300/15">
+                <CheckCircle2 size={52} className="text-lime-400" />
               </div>
 
-              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">
+              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-lime-500">
                 Consultation Confirmed
               </p>
 
-              <h1 className="mt-4 text-4xl font-bold md:text-5xl">
+              <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
                 You're all set.
               </h1>
 
-              <p className="mx-auto mt-5 max-w-lg text-base leading-7 text-gray-400">
-                Your growth consultation has been scheduled successfully.
-                We'll use the information you provided to prepare for the
-                conversation.
+              <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-gray-500 dark:text-gray-400">
+                Your growth consultation has been successfully scheduled.
+                We have your business information and consultation preferences.
               </p>
 
-              <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-left">
+              <div className="mx-auto mt-8 max-w-md rounded-3xl border border-gray-200 bg-gray-50 p-6 text-left dark:border-white/10 dark:bg-white/5">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lime-300/10 text-lime-400">
                     <CalendarDays size={20} />
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
                       Consultation
                     </p>
 
-                    <p className="mt-1 font-semibold text-white">
-                      {consultationDate} · {consultationTime}
+                    <p className="mt-1 font-semibold">
+                      {consultationDate}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center gap-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lime-300/10 text-lime-400">
+                    <Clock3 size={20} />
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                      Time
+                    </p>
+
+                    <p className="mt-1 font-semibold">
+                      {consultationTime}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <p className="mt-8 text-sm text-gray-500">
+              <p className="mt-8 text-sm text-gray-400">
                 Redirecting you to the homepage...
               </p>
-            </div>
-          </ScrollReveal>
+
+              <button
+                onClick={() => navigate("/")}
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-lime-300 px-7 py-3.5 text-sm font-bold text-gray-900 transition duration-200 hover:bg-lime-200 hover:shadow-lg active:scale-[0.98]"
+              >
+                Back to Homepage
+                <ArrowRight size={17} />
+              </button>
+            </ScrollReveal>
+          </div>
         </div>
       </div>
     );
   }
 
   /*
-   * ASSESSMENT SCANNING SCREEN
-   */
+  |--------------------------------------------------------------------------
+  | ASSESSMENT SCANNING SCREEN
+  |--------------------------------------------------------------------------
+  */
   if (scanning) {
     return (
-      <div className="flex min-h-screen bg-[#0b0d0b] text-white">
-        <BookingSidebar />
-
-        <main className="flex min-h-screen w-full flex-1 items-center justify-center px-6 py-12 lg:w-[60%] lg:px-12">
-          <ScrollReveal>
-            <div className="w-full max-w-xl text-center">
+      <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
+        <div className="flex min-h-screen items-center justify-center px-5 py-12">
+          <div className="w-full max-w-xl text-center">
+            <ScrollReveal direction="up">
               <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-lime-300/10">
                 <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-lime-300/30">
                   <Loader2
@@ -452,523 +533,193 @@ const BookingPage = () => {
                 </div>
               </div>
 
-              {/* EXISTING 4 DOT LOADER */}
-              <div className="mt-8 flex justify-center">
-                <LoadingScreen staticLoader />
-              </div>
-
-              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">
+              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-lime-500">
                 Preparing Your Assessment
               </p>
 
-              <h1 className="mt-4 text-4xl font-bold md:text-5xl">
+              <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
                 Scanning your business details
               </h1>
 
-              <p className="mx-auto mt-5 max-w-lg text-base leading-7 text-gray-400">
-                We're analyzing your business information and identifying
-                opportunities that can help improve your lead generation.
+              <p className="mx-auto mt-4 max-w-lg leading-7 text-gray-500 dark:text-gray-400">
+                We're analyzing your business profile, trade, revenue
+                capacity and lead growth target.
               </p>
 
               <div className="mt-10">
-                <div className="mb-3 flex items-center justify-between text-sm">
-                  <span className="text-gray-400">
-                    Assessment progress
-                  </span>
+                <div className="mb-3 flex items-center justify-between text-sm font-semibold">
+                  <span>Assessment progress</span>
 
-                  <span className="font-semibold text-lime-300">
+                  <span className="text-lime-500">
                     {scanProgress}%
                   </span>
                 </div>
 
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-3 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
                   <div
-                    className="h-full rounded-full bg-lime-300 transition-all duration-150"
+                    className="h-full rounded-full bg-lime-300 transition-[width] duration-100 ease-out will-change-[width]"
                     style={{
                       width: `${scanProgress}%`,
                     }}
                   />
                 </div>
               </div>
-
-              <div className="mt-8 flex items-center justify-center gap-2 text-sm text-gray-500">
-                <Sparkles
-                  size={16}
-                  className="text-lime-300"
-                />
-
-                <span>
-                  Finding your highest-value growth opportunities...
-                </span>
-              </div>
-            </div>
-          </ScrollReveal>
-        </main>
+            </ScrollReveal>
+          </div>
+        </div>
       </div>
     );
   }
 
   /*
-   * ASSESSMENT COMPLETE SCREEN
-   */
+  |--------------------------------------------------------------------------
+  | ASSESSMENT COMPLETE → CONSULTATION
+  |--------------------------------------------------------------------------
+  */
   if (assessmentComplete) {
     return (
-      <div className="flex min-h-screen bg-[#0b0d0b] text-white">
-        <BookingSidebar />
-
-        <main className="min-h-screen w-full flex-1 overflow-y-auto lg:w-[60%]">
-          <div className="flex min-h-screen items-center justify-center px-6 py-12 lg:px-12">
-            <ScrollReveal>
-              <div className="w-full max-w-2xl">
-                <div className="text-center">
-                  <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-lime-300/10">
-                    <CheckCircle2
-                      size={52}
-                      className="text-lime-300"
-                    />
-                  </div>
-
-                  <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">
-                    Assessment Complete
-                  </p>
-
-                  <h1 className="mt-4 text-4xl font-bold md:text-5xl">
-                    Your growth assessment is ready.
-                  </h1>
-
-                  <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-gray-400">
-                    We've analyzed the information you provided. Schedule
-                    your consultation below and we'll walk you through the
-                    opportunities identified for your business.
-                  </p>
+      <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
+        <div className="flex min-h-screen items-center justify-center px-5 py-12">
+          <div className="w-full max-w-4xl">
+            <ScrollReveal direction="up">
+              <div className="text-center">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-lime-300/15">
+                  <CheckCircle2
+                    size={42}
+                    className="text-lime-400"
+                  />
                 </div>
 
-                <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-6 md:p-8">
-                  <div className="flex items-center gap-3">
-                    <CalendarDays
-                      size={20}
-                      className="text-lime-300"
-                    />
+                <p className="mt-7 text-sm font-semibold uppercase tracking-[0.2em] text-lime-500">
+                  Assessment Complete
+                </p>
+
+                <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                  Your growth assessment is ready.
+                </h1>
+
+                <p className="mx-auto mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
+                  Choose a convenient date and time for your consultation with
+                  the LeadAxis team.
+                </p>
+              </div>
+
+              <div className="mt-12">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-300/10 text-lime-400">
+                    <CalendarDays size={19} />
+                  </div>
+
+                  <div>
+                    <h2 className="font-semibold">
+                      Select Consultation Date
+                    </h2>
+
+                    <p className="text-sm text-gray-500">
+                      Choose a date from the next 7 days.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-7">
+                  {consultationDates.map((date) => {
+                    const value = formatDateValue(date);
+                    const selected = consultationDate === value;
+
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setConsultationDate(value);
+                          setConsultationTime("");
+                        }}
+                        className={`group rounded-2xl border p-3 text-center transition duration-200 will-change-transform hover:-translate-y-0.5 ${
+                          selected
+                            ? "border-lime-300 bg-lime-300 text-gray-900 shadow-lg shadow-lime-300/10"
+                            : "border-gray-200 bg-gray-50 hover:border-lime-300 dark:border-white/10 dark:bg-white/5"
+                        }`}
+                      >
+                        <p
+                          className={`text-xs font-semibold ${
+                            selected
+                              ? "text-gray-700"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {formatDay(date)}
+                        </p>
+
+                        <p className="mt-1 text-xl font-bold">
+                          {formatDateNumber(date)}
+                        </p>
+
+                        <p
+                          className={`mt-1 text-xs ${
+                            selected
+                              ? "text-gray-700"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {formatMonth(date)}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {consultationDate && (
+                <div className="mt-10">
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-300/10 text-lime-400">
+                      <Clock3 size={19} />
+                    </div>
 
                     <div>
-                      <h2 className="font-semibold text-white">
-                        Select consultation date
+                      <h2 className="font-semibold">
+                        Select Consultation Time
                       </h2>
 
-                      <p className="mt-1 text-sm text-gray-500">
-                        Choose a convenient date for your consultation.
+                      <p className="text-sm text-gray-500">
+                        Choose your preferred time.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {consultationDates.map((item) => {
-                      const selected =
-                        consultationDate === item.value;
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {TIME_OPTIONS.map((time) => {
+                      const selected = consultationTime === time;
 
                       return (
                         <button
-                          key={item.value}
+                          key={time}
                           type="button"
-                          onClick={() =>
-                            setConsultationDate(item.value)
-                          }
-                          className={`rounded-2xl border p-4 text-left transition ${
+                          onClick={() => setConsultationTime(time)}
+                          className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-4 text-sm font-semibold transition duration-200 will-change-transform hover:-translate-y-0.5 ${
                             selected
-                              ? "border-lime-300 bg-lime-300/10"
-                              : "border-white/10 bg-white/[0.02] hover:border-lime-300/40"
+                              ? "border-lime-300 bg-lime-300 text-gray-900 shadow-lg shadow-lime-300/10"
+                              : "border-gray-200 bg-gray-50 hover:border-lime-300 dark:border-white/10 dark:bg-white/5"
                           }`}
                         >
-                          <p
-                            className={`text-xs font-semibold uppercase ${
-                              selected
-                                ? "text-lime-300"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {item.day}
-                          </p>
-
-                          <p className="mt-2 font-semibold text-white">
-                            {item.date}
-                          </p>
-
-                          {selected && (
-                            <div className="mt-3 flex items-center gap-1 text-xs text-lime-300">
-                              <Check size={14} />
-                              Selected
-                            </div>
-                          )}
+                          <Clock3 size={16} />
+                          {time}
                         </button>
                       );
                     })}
                   </div>
-
-                  <div className="mt-8">
-                    <div className="flex items-center gap-3">
-                      <Clock3
-                        size={20}
-                        className="text-lime-300"
-                      />
-
-                      <div>
-                        <h2 className="font-semibold text-white">
-                          Select consultation time
-                        </h2>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                          Choose a suitable time.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                      {[
-                        "10:00 AM",
-                        "12:00 PM",
-                        "2:00 PM",
-                        "4:00 PM",
-                      ].map((time) => {
-                        const selected =
-                          consultationTime === time;
-
-                        return (
-                          <button
-                            key={time}
-                            type="button"
-                            onClick={() =>
-                              setConsultationTime(time)
-                            }
-                            className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                              selected
-                                ? "border-lime-300 bg-lime-300/10 text-lime-300"
-                                : "border-white/10 text-gray-400 hover:border-lime-300/40 hover:text-white"
-                            }`}
-                          >
-                            {time}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAssessmentComplete(false);
-                        setStep(3);
-                      }}
-                      disabled={submitting}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-5 py-3 font-semibold text-gray-300 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <ArrowLeft size={17} />
-                      Back
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleConfirmConsultation}
-                      disabled={submitting}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-lime-300 px-6 py-3 font-bold text-black transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {submitting ? (
-                        <>
-                          <Loader2
-                            size={18}
-                            className="animate-spin"
-                          />
-                          Confirming...
-                        </>
-                      ) : (
-                        <>
-                          Confirm Consultation
-                          <ArrowRight size={18} />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  /*
-   * MAIN BOOKING FORM
-   */
-  return (
-    <div className="flex min-h-screen bg-[#0b0d0b] text-white">
-      <BookingSidebar />
-
-      <main className="flex min-h-screen w-full flex-1 flex-col lg:w-[60%]">
-        <div className="flex flex-1 items-center justify-center px-6 py-10 lg:px-12">
-          <ScrollReveal>
-            <div className="w-full max-w-2xl">
-              {/* TOP */}
-              <div className="mb-10">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">
-                      Growth Assessment
-                    </p>
-
-                    <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-                      Let's understand your business.
-                    </h2>
-                  </div>
-
-                  <div className="text-sm text-gray-500">
-                    Step{" "}
-                    <span className="font-semibold text-white">
-                      {step}
-                    </span>{" "}
-                    of 3
-                  </div>
-                </div>
-
-                {/* STEP PROGRESS */}
-                <div className="mt-7 flex gap-2">
-                  {[1, 2, 3].map((item) => (
-                    <div
-                      key={item}
-                      className={`h-1.5 flex-1 rounded-full transition ${
-                        item <= step
-                          ? "bg-lime-300"
-                          : "bg-white/10"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* STEP 1 */}
-              {step === 1 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Business name
-                    </label>
-
-                    <div className="relative">
-                      <Building2
-                        size={19}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-                      />
-
-                      <input
-                        type="text"
-                        value={formData.businessName}
-                        onChange={(e) =>
-                          updateField(
-                            "businessName",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Your business name"
-                        className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-gray-600 focus:border-lime-300/50"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Business type
-                    </label>
-
-                    <div className="relative">
-                      <BriefcaseBusiness
-                        size={19}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-                      />
-
-                      <input
-                        type="text"
-                        value={formData.businessType}
-                        onChange={(e) =>
-                          updateField(
-                            "businessType",
-                            e.target.value
-                          )
-                        }
-                        placeholder="e.g. HVAC, Roofing, Plumbing"
-                        className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-gray-600 focus:border-lime-300/50"
-                      />
-                    </div>
-                  </div>
                 </div>
               )}
 
-              {/* STEP 2 */}
-              {step === 2 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Your name
-                    </label>
-
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) =>
-                        updateField("name", e.target.value)
-                      }
-                      placeholder="Full name"
-                      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-white outline-none transition placeholder:text-gray-600 focus:border-lime-300/50"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Email address
-                    </label>
-
-                    <div className="relative">
-                      <Mail
-                        size={19}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-                      />
-
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          updateField(
-                            "email",
-                            e.target.value
-                          )
-                        }
-                        placeholder="you@company.com"
-                        className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-gray-600 focus:border-lime-300/50"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Phone number
-                    </label>
-
-                    <div className="relative">
-                      <Phone
-                        size={19}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-                      />
-
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) =>
-                          updateField(
-                            "phone",
-                            e.target.value
-                          )
-                        }
-                        placeholder="+1 (555) 000-0000"
-                        className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-4 pl-12 pr-4 text-white outline-none transition placeholder:text-gray-600 focus:border-lime-300/50"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3 */}
-              {step === 3 && (
-                <div className="space-y-6">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Annual revenue
-                    </label>
-
-                    <div className="relative">
-                      <select
-                        value={formData.revenue}
-                        onChange={(e) =>
-                          updateField(
-                            "revenue",
-                            e.target.value
-                          )
-                        }
-                        className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-white outline-none transition focus:border-lime-300/50"
-                      >
-                        <option
-                          value=""
-                          className="bg-[#101310]"
-                        >
-                          Select annual revenue
-                        </option>
-
-                        {REVENUE_OPTIONS.map((option) => (
-                          <option
-                            key={option}
-                            value={option}
-                            className="bg-[#101310]"
-                          >
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-
-                      <ChevronDown
-                        size={19}
-                        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Current monthly leads
-                    </label>
-
-                    <div className="relative">
-                      <select
-                        value={formData.leads}
-                        onChange={(e) =>
-                          updateField(
-                            "leads",
-                            e.target.value
-                          )
-                        }
-                        className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-white outline-none transition focus:border-lime-300/50"
-                      >
-                        <option
-                          value=""
-                          className="bg-[#101310]"
-                        >
-                          Select monthly leads
-                        </option>
-
-                        {LEAD_OPTIONS.map((option) => (
-                          <option
-                            key={option}
-                            value={option}
-                            className="bg-[#101310]"
-                          >
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-
-                      <ChevronDown
-                        size={19}
-                        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* NAVIGATION */}
-              <div className="mt-10 flex items-center justify-between gap-4">
+              <div className="mt-10 flex items-center justify-between border-t border-gray-200 pt-6 dark:border-white/10">
                 <button
                   type="button"
-                  onClick={previousStep}
-                  disabled={step === 1 || submitting}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-3 font-semibold text-gray-300 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                  onClick={() => {
+                    setAssessmentComplete(false);
+                    setConsultationDate("");
+                    setConsultationTime("");
+                  }}
+                  className="flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white"
                 >
                   <ArrowLeft size={17} />
                   Back
@@ -976,36 +727,640 @@ const BookingPage = () => {
 
                 <button
                   type="button"
-                  onClick={nextStep}
-                  disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-lime-300 px-6 py-3 font-bold text-black transition hover:bg-lime-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={handleConfirmConsultation}
+                  disabled={
+                    !consultationDate ||
+                    !consultationTime ||
+                    submitting
+                  }
+                  className="group flex items-center gap-2 rounded-full bg-lime-300 px-7 py-3.5 text-sm font-bold text-gray-900 transition duration-200 hover:bg-lime-200 hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {step === 3 ? (
+                  {submitting ? (
                     <>
-                      Start Assessment
-                      <ArrowRight size={18} />
+                      <Loader2
+                        size={17}
+                        className="animate-spin"
+                      />
+                      Confirming...
                     </>
                   ) : (
                     <>
-                      Continue
-                      <ArrowRight size={18} />
+                      Confirm Consultation
+                      <CheckCircle2 size={17} />
                     </>
                   )}
                 </button>
               </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-              {/* RESET */}
+  /*
+  |--------------------------------------------------------------------------
+  | MAIN BOOKING FORM
+  |--------------------------------------------------------------------------
+  */
+  return (
+    <div className="page-transition min-h-screen bg-white text-gray-900 dark:bg-[#080a09] dark:text-white">
+      <div className="flex min-h-screen">
+
+        {/* LEFT PANEL */}
+        <aside className="relative hidden w-[40%] overflow-hidden bg-[#101310] lg:flex">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(190,242,100,0.12),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(190,242,100,0.08),transparent_30%)]" />
+
+          <div className="relative z-10 flex w-full flex-col justify-between p-10 xl:p-14">
+            <div>
               <button
                 type="button"
-                onClick={resetBooking}
-                className="mx-auto mt-8 block text-xs text-gray-600 transition hover:text-gray-400"
+                onClick={() => navigate("/")}
+                className="text-2xl font-black tracking-tight text-white"
               >
-                Start over
+                Lead<span className="text-lime-300">Axis</span>
               </button>
+
+              <div className="mt-20 max-w-lg">
+                <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-lime-300">
+                  Exclusive Growth Consultation
+                </p>
+
+                <h1 className="text-4xl font-bold leading-tight text-white xl:text-5xl">
+                  Unlock your custom
+                  <span className="text-lime-300">
+                    {" "}
+                    growth roadmap.
+                  </span>
+                </h1>
+
+                <p className="mt-6 max-w-md text-base leading-7 text-gray-400">
+                  Tell us where your business is today. We'll identify the
+                  opportunities, channels and strategies that can help you
+                  generate more qualified leads.
+                </p>
+              </div>
+
+              <div className="mt-12 space-y-5">
+                <div className="flex gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
+                    <Target size={19} />
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      Competitor Opportunity
+                    </h3>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      Identify where competitors are capturing demand.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
+                    <TrendingUp size={19} />
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      Growth Playbook
+                    </h3>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      Build a strategy around your actual business goals.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-300">
+                    <Users size={19} />
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      Qualified Leads
+                    </h3>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      Focus on generating customers, not meaningless traffic.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </ScrollReveal>
-        </div>
-      </main>
+
+            <div className="flex items-center justify-between border-t border-white/10 pt-6">
+              <div>
+                <p className="text-2xl font-bold text-white">
+                  2.4M+
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  Service calls processed
+                </p>
+              </div>
+
+              <div>
+                <p className="text-2xl font-bold text-white">
+                  10K+
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  Business opportunities
+                </p>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* RIGHT PANEL */}
+        <main className="flex min-h-screen w-full flex-col lg:w-[60%]">
+
+          {/* MOBILE HEADER */}
+          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-5 dark:border-white/10 lg:hidden">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="text-xl font-black"
+            >
+              Lead<span className="text-lime-500">Axis</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:hover:text-white"
+            >
+              <ArrowLeft size={17} />
+              Back
+            </button>
+          </div>
+
+          <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 py-8 sm:px-8 md:px-12 lg:px-16 lg:py-12 xl:px-20">
+
+            {/* DESKTOP BACK */}
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="mb-12 hidden w-fit items-center gap-2 text-sm font-medium text-gray-500 transition hover:text-gray-900 dark:hover:text-white lg:flex"
+            >
+              <ArrowLeft size={17} />
+              Back to homepage
+            </button>
+
+            {/* PROGRESS */}
+            <div className="mb-12">
+              <div className="flex items-center">
+                {steps.map((item, index) => (
+                  <div
+                    key={item.number}
+                    className="flex flex-1 items-center"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all duration-300 will-change-transform ${
+                          step >= item.number
+                            ? "bg-lime-300 text-gray-900"
+                            : "bg-gray-100 text-gray-400 dark:bg-white/10"
+                        }`}
+                      >
+                        {step > item.number ? (
+                          <Check size={17} />
+                        ) : (
+                          item.number
+                        )}
+                      </div>
+
+                      <span
+                        className={`hidden text-sm font-semibold sm:block ${
+                          step >= item.number
+                            ? "text-gray-900 dark:text-white"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {item.title}
+                      </span>
+                    </div>
+
+                    {index < steps.length - 1 && (
+                      <div
+                        className={`mx-4 h-px flex-1 transition-all duration-500 ${
+                          step > item.number
+                            ? "bg-lime-300"
+                            : "bg-gray-200 dark:bg-white/10"
+                        }`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+
+                if (step === 3) {
+                  startAssessment();
+                }
+              }}
+              className="flex-1"
+            >
+
+              {/* STEP 1 */}
+              {step === 1 && (
+                <ScrollReveal direction="up">
+                  <div>
+                    <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-lime-500">
+                      Step 1
+                    </p>
+
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                      Tell us about your business.
+                    </h2>
+
+                    <p className="mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
+                      Start with your business or contractor information so
+                      we can understand what you do.
+                    </p>
+
+                    <div className="mt-10 space-y-6">
+
+                      {/* BUSINESS NAME */}
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold">
+                          Business / Contractor Name
+                        </label>
+
+                        <div className="relative">
+                          <Building2
+                            size={18}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          />
+
+                          <input
+                            type="text"
+                            name="businessName"
+                            value={formData.businessName}
+                            onChange={handleChange}
+                            placeholder="Your business name"
+                            autoComplete="organization"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-12 py-4 outline-none transition duration-200 focus:border-lime-400 focus:ring-4 focus:ring-lime-300/10 dark:border-white/10 dark:bg-white/5"
+                          />
+                        </div>
+                      </div>
+
+                      {/* MODERN TRADE SELECT */}
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold">
+                          Select Trade / Industry
+                        </label>
+
+                        <div className="relative">
+                          <BriefcaseBusiness
+                            size={18}
+                            className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-gray-400"
+                          />
+
+                          <select
+                            name="industry"
+                            value={formData.industry}
+                            onChange={handleChange}
+                            className="
+                              w-full
+                              cursor-pointer
+                              appearance-none
+                              rounded-2xl
+                              border
+                              border-gray-200
+                              bg-gray-50
+                              px-12
+                              py-4
+                              pr-12
+                              text-sm
+                              font-medium
+                              text-gray-900
+                              outline-none
+                              transition-all
+                              duration-200
+                              hover:border-gray-300
+                              focus:border-lime-400
+                              focus:ring-4
+                              focus:ring-lime-300/10
+                              dark:border-white/10
+                              dark:bg-[#111512]
+                              dark:text-white
+                              dark:hover:border-white/20
+                            "
+                          >
+                            <option
+                              value=""
+                              className="bg-white text-gray-900 dark:bg-[#111512] dark:text-gray-400"
+                            >
+                              Select trade / industry
+                            </option>
+
+                            {TRADE_OPTIONS.map((trade) => (
+                              <option
+                                key={trade}
+                                value={trade}
+                                className="bg-white text-gray-900 dark:bg-[#111512] dark:text-white"
+                              >
+                                {trade}
+                              </option>
+                            ))}
+                          </select>
+
+                          <ChevronDown
+                            size={18}
+                            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-transform"
+                          />
+                        </div>
+
+                        <p className="mt-2 text-xs text-gray-400">
+                          Choose the service category that best matches your
+                          business.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              )}
+
+              {/* STEP 2 */}
+              {step === 2 && (
+                <ScrollReveal direction="up">
+                  <div>
+                    <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-lime-500">
+                      Step 2
+                    </p>
+
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                      How can we reach you?
+                    </h2>
+
+                    <p className="mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
+                      Provide your contact details so our team can follow up
+                      about your consultation.
+                    </p>
+
+                    <div className="mt-10 space-y-6">
+
+                      {/* NAME */}
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold">
+                          Full Name
+                        </label>
+
+                        <div className="relative">
+                          <Users
+                            size={18}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          />
+
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="Your full name"
+                            autoComplete="name"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-12 py-4 outline-none transition duration-200 focus:border-lime-400 focus:ring-4 focus:ring-lime-300/10 dark:border-white/10 dark:bg-white/5"
+                          />
+                        </div>
+                      </div>
+
+                      {/* EMAIL */}
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold">
+                          Business Email
+                        </label>
+
+                        <div className="relative">
+                          <Mail
+                            size={18}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          />
+
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="you@company.com"
+                            autoComplete="email"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-12 py-4 outline-none transition duration-200 focus:border-lime-400 focus:ring-4 focus:ring-lime-300/10 dark:border-white/10 dark:bg-white/5"
+                          />
+                        </div>
+                      </div>
+
+                      {/* PHONE */}
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold">
+                          Phone Number
+                        </label>
+
+                        <div className="relative">
+                          <Phone
+                            size={18}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                          />
+
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            placeholder="+1 555 000 0000"
+                            autoComplete="tel"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-12 py-4 outline-none transition duration-200 focus:border-lime-400 focus:ring-4 focus:ring-lime-300/10 dark:border-white/10 dark:bg-white/5"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              )}
+
+              {/* STEP 3 */}
+              {step === 3 && (
+                <ScrollReveal direction="up">
+                  <div>
+                    <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-lime-500">
+                      Step 3
+                    </p>
+
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                      What are your growth goals?
+                    </h2>
+
+                    <p className="mt-4 max-w-xl leading-7 text-gray-500 dark:text-gray-400">
+                      We tailor your growth assessment based on your current
+                      revenue and operational volume capability.
+                    </p>
+
+                    <div className="mt-10 space-y-8">
+
+                      {/* REVENUE */}
+                      <div>
+                        <label className="mb-3 block text-sm font-semibold">
+                          Current Estimated Monthly Revenue
+                        </label>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {REVENUE_OPTIONS.map((option) => {
+                            const selected =
+                              formData.monthlyRevenue === option;
+
+                            return (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    monthlyRevenue: option,
+                                    monthlyLeads: "",
+                                  }))
+                                }
+                                className={`rounded-2xl border px-5 py-4 text-left text-sm font-semibold transition duration-200 will-change-transform hover:-translate-y-0.5 ${
+                                  selected
+                                    ? "border-lime-300 bg-lime-300 text-gray-900 shadow-lg shadow-lime-300/10"
+                                    : "border-gray-200 bg-gray-50 hover:border-lime-300 dark:border-white/10 dark:bg-white/5"
+                                }`}
+                              >
+                                {option}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* LEADS */}
+                      {formData.monthlyRevenue && (
+                        <div className="animate-[fadeIn_300ms_ease-out]">
+                          <label className="mb-3 block text-sm font-semibold">
+                            Target Leads Increase Per Month
+                          </label>
+
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {LEAD_OPTIONS.map((option) => {
+                              const selected =
+                                formData.monthlyLeads === option;
+
+                              return (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  onClick={() =>
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      monthlyLeads: option,
+                                    }))
+                                  }
+                                  className={`rounded-2xl border px-5 py-4 text-left text-sm font-semibold transition duration-200 will-change-transform hover:-translate-y-0.5 ${
+                                    selected
+                                      ? "border-lime-300 bg-lime-300 text-gray-900 shadow-lg shadow-lime-300/10"
+                                      : "border-gray-200 bg-gray-50 hover:border-lime-300 dark:border-white/10 dark:bg-white/5"
+                                  }`}
+                                >
+                                  {option}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SUMMARY */}
+                      {formData.monthlyRevenue &&
+                        formData.monthlyLeads && (
+                          <div className="rounded-2xl border border-lime-300/20 bg-lime-300/5 p-5">
+                            <div className="flex gap-4">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300/10 text-lime-400">
+                                <Sparkles size={18} />
+                              </div>
+
+                              <div>
+                                <p className="font-semibold">
+                                  Your assessment is ready to generate.
+                                </p>
+
+                                <p className="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                                  We'll scan the information you've provided
+                                  and prepare the next step for your
+                                  consultation.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                </ScrollReveal>
+              )}
+
+              {/* BUTTONS */}
+              <div className="mt-12 flex items-center justify-between border-t border-gray-200 pt-6 dark:border-white/10">
+                {step > 1 ? (
+                  <button
+                    type="button"
+                    onClick={previousStep}
+                    disabled={scanning || submitting}
+                    className="flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-gray-500 transition duration-200 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50 dark:hover:bg-white/10 dark:hover:text-white"
+                  >
+                    <ArrowLeft size={17} />
+                    Back
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-gray-500 transition duration-200 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white"
+                  >
+                    <ArrowLeft size={17} />
+                    Home
+                  </button>
+                )}
+
+                {step < 3 ? (
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    className="group flex items-center gap-2 rounded-full bg-lime-300 px-7 py-3.5 text-sm font-bold text-gray-900 transition duration-200 hover:bg-lime-200 hover:shadow-lg active:scale-[0.98]"
+                  >
+                    Continue
+
+                    <ArrowRight
+                      size={17}
+                      className="transition-transform duration-200 group-hover:translate-x-1"
+                    />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={
+                      !formData.monthlyRevenue ||
+                      !formData.monthlyLeads
+                    }
+                    className="group flex items-center gap-2 rounded-full bg-lime-300 px-7 py-3.5 text-sm font-bold text-gray-900 transition duration-200 hover:bg-lime-200 hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Generate Assessment
+
+                    <ArrowRight
+                      size={17}
+                      className="transition-transform duration-200 group-hover:translate-x-1"
+                    />
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
