@@ -239,7 +239,7 @@ const Navbar = () => {
 
           {/* Mobile Booking Button */}
           <div className="mt-3 border-t border-gray-100 pt-4">
-            <Booking name="Book a Call" />
+            <Booking name="Let's Connect" />
           </div>
 
         </div>
