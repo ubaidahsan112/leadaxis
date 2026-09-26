@@ -310,51 +310,89 @@ const ServiceDetail = () => {
               </ScrollReveal>
 
               {/* RIGHT INCLUDED */}
-              <ScrollReveal direction="right">
-                <div className="relative overflow-hidden rounded-[2rem] border border-lime-600 bg-lime-300 p-6 sm:p-8 lg:p-9">
-                  <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-lime-300/10 blur-[70px]" />
 
-                  <div className="relative">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-lime-600 sm:text-sm">
-                          Included
-                        </p>
+<ScrollReveal direction="right">
+  <div className="relative overflow-hidden rounded-[2rem] border border-lime-600 bg-lime-300 p-6 sm:p-8 lg:p-9">
+    <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-lime-300/10 blur-[70px]" />
 
-                        <h3 className="mt-2 text-2xl font-black sm:text-3xl">
-                          What you get
-                        </h3>
-                      </div>
+    <div className="relative">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-lime-600 sm:text-sm">
+            Included
+          </p>
 
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-950 text-lime-300">
-                        <CheckCircle2 size={22} />
-                      </div>
-                    </div>
+          <h3 className="mt-2 text-2xl font-black sm:text-3xl">
+            What you get
+          </h3>
+        </div>
 
-                    <div className="mt-8 space-y-3">
-                      {service.services.map((item, index) => (
-                        <div
-                          key={item}
-                          className="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-lime-300 hover:shadow-md"
-                        >
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-lime-300/15 text-sm font-bold text-lime-700 transition-colors group-hover:bg-lime-300">
-                            {String(index + 1).padStart(2, "0")}
-                          </div>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-950 text-lime-300">
+          <CheckCircle2 size={22} />
+        </div>
+      </div>
 
-                          <span className="text-sm font-semibold text-gray-700 sm:text-base">
-                            {item}
-                          </span>
+      <div className="mt-8 space-y-3">
+        {service.services.map((item, index) => (
+          <ScrollReveal
+            key={item}
+            direction="right"
+            delay={index * 120}
+          >
+            <div
+              className="
+                group
+                flex
+                items-center
+                gap-4
+                rounded-xl
+                border
+                border-gray-200
+                bg-white
+                p-4
+                transition-all
+                duration-300
+                hover:-translate-y-0.5
+                hover:border-lime-300
+                hover:shadow-md
+              "
+            >
+              <div
+                className="
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  bg-lime-300/15
+                  text-sm
+                  font-bold
+                  text-lime-700
+                  transition-colors
+                  group-hover:bg-lime-300
+                "
+              >
+                {String(index + 1).padStart(2, "0")}
+              </div>
 
-                          <CheckCircle2
-                            size={17}
-                            className="ml-auto shrink-0 text-lime-500 opacity-70"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </ScrollReveal>
+              <span className="text-sm font-semibold text-gray-700 sm:text-base">
+                {item}
+              </span>
+
+              <CheckCircle2
+                size={17}
+                className="ml-auto shrink-0 text-lime-500 opacity-70"
+              />
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
+    </div>
+  </div>
+</ScrollReveal>
+
             </div>
 
             {/* SERVICE CTA */}
