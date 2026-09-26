@@ -218,28 +218,6 @@ const projects = [
   },
 
   {
-    category: "Home Renovation",
-    title: "Atlas Home Renovation",
-    metric: "$50K+",
-    metricLabel: "Avg. project",
-    description:
-      "A design-build case study hub and long-nurture SEO program focused on attracting homeowners searching for high-value whole-home remodeling projects.",
-    tags: ["SEO", "Web Development", "Content"],
-    accent: "lime",
-  },
-
-  {
-    category: "Home Security",
-    title: "SafeNest Security",
-    metric: "480",
-    metricLabel: "New contracts",
-    description:
-      "Smart-home integration content combined with seasonal crime-awareness campaigns generated hundreds of new monitoring contracts in 90 days.",
-    tags: ["Paid Media", "Content", "Lead Funnels"],
-    accent: "dark",
-  },
-
-  {
     category: "Kitchen Remodeling",
     title: "Copper & Oak Kitchens",
     metric: "38",
@@ -281,17 +259,6 @@ const projects = [
       "Curb-appeal creative and storm-damage lead capture campaigns increased whole-house exterior project opportunities over six months.",
     tags: ["Creative", "PPC", "Lead Capture"],
     accent: "dark",
-  },
-
-  {
-    category: "Solar",
-    title: "BrightPath Solar",
-    metric: "72",
-    metricLabel: "Consultations",
-    description:
-      "An ROI calculator and incentive-focused content funnel helped turn solar research traffic into qualified system consultations.",
-    tags: ["ROI Calculator", "SEO", "Conversion"],
-    accent: "lime",
   },
 
   {
@@ -343,16 +310,6 @@ const projects = [
     accent: "lime",
   },
 
-  {
-    category: "Website Development",
-    title: "Vertex Fitness",
-    metric: "+91%",
-    metricLabel: "Membership inquiries",
-    description:
-      "A bold fitness website combining strong visual hierarchy, service pages, trainer profiles, and conversion-focused membership calls to action.",
-    tags: ["React", "Landing Pages", "UI/UX"],
-    accent: "dark",
-  },
 
   // ----------------------------------------------------------
   // REACT NATIVE
@@ -366,17 +323,6 @@ const projects = [
     description:
       "A complete React Native plant e-commerce application featuring product browsing, categories, cart, checkout, address management, payment options, authentication, and order management.",
     tags: ["React Native", "Firebase", "E-Commerce"],
-    accent: "dark",
-  },
-
-  {
-    category: "React Native",
-    title: "ServicePro",
-    metric: "3.6x",
-    metricLabel: "Faster job updates",
-    description:
-      "A field-service mobile application connecting technicians with service requests, job details, status updates, and customer information.",
-    tags: ["React Native", "REST API", "Real-Time Data"],
     accent: "dark",
   },
 
