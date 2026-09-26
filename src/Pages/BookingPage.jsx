@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import {
   ArrowLeft,
   ArrowRight,
@@ -82,6 +81,8 @@ const BookingPage = () => {
 
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [isIndustryOpen, setIsIndustryOpen] = useState(false);
+
 
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -1018,67 +1019,194 @@ const BookingPage = () => {
                         <label className="mb-2 block text-sm font-semibold">
                           Select Trade / Industry
                         </label>
+<div className="relative w-full">
+  <label className="mb-2.5 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+    Trade / Industry
+  </label>
 
-                        <div className="relative">
-                          <BriefcaseBusiness
-                            size={18}
-                            className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-gray-400"
-                          />
+  <div className="group relative">
+    {/* Main Selection */}
+    <button
+      type="button"
+      onClick={() => setIsIndustryOpen(!isIndustryOpen)}
+      className="
+        flex
+        min-h-[58px]
+        w-full
+        items-center
+        gap-3
+        rounded-2xl
+        border
+        border-gray-200
+        bg-gray-50
+        px-4
+        text-left
+        shadow-sm
+        transition-all
+        duration-300
 
-                          <select
-                            name="industry"
-                            value={formData.industry}
-                            onChange={handleChange}
-                            className="
-                              w-full
-                              cursor-pointer
-                              appearance-none
-                              rounded-2xl
-                              border
-                              border-gray-200
-                              bg-gray-50
-                              px-12
-                              py-4
-                              pr-12
-                              text-sm
-                              font-medium
-                              text-gray-900
-                              outline-none
-                              transition-all
-                              duration-200
-                              hover:border-gray-300
-                              focus:border-lime-400
-                              focus:ring-4
-                              focus:ring-lime-300/10
-                              dark:border-white/10
-                              dark:bg-[#111512]
-                              dark:text-white
-                              dark:hover:border-white/20
-                            "
-                          >
-                            <option
-                              value=""
-                              className="bg-white text-gray-900 dark:bg-[#111512] dark:text-gray-400"
-                            >
-                              Select trade / industry
-                            </option>
+        hover:border-lime-300
+        hover:bg-white
 
-                            {TRADE_OPTIONS.map((trade) => (
-                              <option
-                                key={trade}
-                                value={trade}
-                                className="bg-white text-gray-900 dark:bg-[#111512] dark:text-white"
-                              >
-                                {trade}
-                              </option>
-                            ))}
-                          </select>
+        focus:outline-none
+        focus:ring-4
+        focus:ring-lime-300/10
 
-                          <ChevronDown
-                            size={18}
-                            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-transform"
-                          />
-                        </div>
+        dark:border-white/10
+        dark:bg-[#111512]
+        dark:hover:border-lime-300/30
+        dark:hover:bg-[#141914]
+      "
+    >
+      {/* Icon */}
+      <div
+        className="
+          flex
+          h-10
+          w-10
+          shrink-0
+          items-center
+          justify-center
+          rounded-xl
+          bg-lime-300/10
+          text-lime-600
+          transition-colors
+          duration-300
+          group-hover:bg-lime-300
+          group-hover:text-gray-950
+          dark:text-lime-300
+        "
+      >
+        <BriefcaseBusiness size={18} />
+      </div>
+
+      {/* Selected Value */}
+      <div className="min-w-0 flex-1">
+        <span
+          className={`block truncate text-sm font-semibold ${
+            formData.industry
+              ? "text-gray-900 dark:text-white"
+              : "text-gray-400 dark:text-gray-500"
+          }`}
+        >
+          {formData.industry || "Select trade / industry"}
+        </span>
+
+        <span className="mt-0.5 block text-[11px] text-gray-400 dark:text-gray-500">
+          Choose your business category
+        </span>
+      </div>
+
+      {/* Arrow */}
+      <div
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-all duration-300 dark:bg-white/5 dark:text-gray-400 ${
+          isIndustryOpen
+            ? "rotate-180 bg-lime-300 text-gray-950 dark:bg-lime-300 dark:text-gray-950"
+            : ""
+        }`}
+      >
+        <ChevronDown size={18} />
+      </div>
+    </button>
+
+    {/* Dropdown */}
+    {isIndustryOpen && (
+      <div
+        className="
+          absolute
+          left-0
+          right-0
+          z-50
+          mt-2
+          max-h-64
+          overflow-y-auto
+          rounded-2xl
+          border
+          border-gray-200
+          bg-white
+          p-2
+          shadow-[0_20px_50px_rgba(0,0,0,0.12)]
+          dark:border-white/10
+          dark:bg-[#101411]
+          dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)]
+        "
+      >
+        {TRADE_OPTIONS.map((trade) => {
+          const selected = formData.industry === trade;
+
+          return (
+            <button
+              key={trade}
+              type="button"
+              onClick={() => {
+                handleChange({
+                  target: {
+                    name: "industry",
+                    value: trade,
+                  },
+                });
+
+                setIsIndustryOpen(false);
+              }}
+              className={`
+                flex
+                w-full
+                items-center
+                gap-3
+                rounded-xl
+                px-3
+                py-3
+                text-left
+                text-sm
+                font-medium
+                transition-all
+                duration-200
+
+                ${
+                  selected
+                    ? "bg-lime-300 text-gray-950"
+                    : "text-gray-700 hover:bg-lime-300/10 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-lime-300/10 dark:hover:text-white"
+                }
+              `}
+            >
+              <div
+                className={`
+                  flex
+                  h-8
+                  w-8
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  ${
+                    selected
+                      ? "bg-gray-950/10"
+                      : "bg-gray-100 dark:bg-white/5"
+                  }
+                `}
+              >
+                <BriefcaseBusiness size={15} />
+              </div>
+
+              <span className="min-w-0 flex-1 truncate">
+                {trade}
+              </span>
+
+              {selected && (
+                <Check size={17} strokeWidth={2.5} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</div>
+
+
+
+
+
 
                         <p className="mt-2 text-xs text-gray-400">
                           Choose the service category that best matches your

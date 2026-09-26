@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-
+import ServiceDetail from "./Pages/ServiceDetail";
+import ProjectDetail from "./Pages/ProjectDetail";
 import Navbar from "./Components/Navbar";
 import AIChatbot from "./Components/AIChatbot";
 import ProtectedRoute from "./Components/ProtectedRoute";
@@ -68,6 +69,17 @@ const App = () => {
             </>
           }
         />
+        <Route path="/" element={<Home />} />
+
+<Route
+  path="/service/:slug"
+  element={<ServiceDetail />}
+/>
+
+<Route
+  path="/project/:slug"
+  element={<ProjectDetail />}
+/>
 
         {/* =========================
             BOOKING
