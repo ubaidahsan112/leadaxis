@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import Navbar from "./Components/Navbar";
 import AIChatbot from "./Components/AIChatbot";
 import ProtectedRoute from "./Components/ProtectedRoute";
+import LoadingScreen from "./Components/LoadingScreen";
 
 import Home from "./Pages/Home";
 import BookingPage from "./Pages/BookingPage";
@@ -16,8 +18,24 @@ import AdminSetting from "./Pages/Admin/AdminSetting";
 import AdminLeadDetail from "./Pages/Admin/AdminLeadDetail";
 
 const App = () => {
+  const [loading, setLoading] = useState(true);
+
   return (
     <>
+      {/* =========================
+          LOADING SCREEN
+      ========================== */}
+
+      {loading && (
+        <LoadingScreen
+          onComplete={() => setLoading(false)}
+        />
+      )}
+
+      {/* =========================
+          TOASTER
+      ========================== */}
+
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -31,8 +49,15 @@ const App = () => {
         }}
       />
 
+      {/* =========================
+          ROUTES
+      ========================== */}
+
       <Routes>
-        {/* Public Website */}
+
+        {/* =========================
+            PUBLIC WEBSITE
+        ========================== */}
 
         <Route
           path="/"
@@ -44,21 +69,30 @@ const App = () => {
           }
         />
 
+        {/* =========================
+            BOOKING
+        ========================== */}
+
         <Route
           path="/booking"
           element={<BookingPage />}
         />
 
-        {/* Admin Login */}
+        {/* =========================
+            ADMIN LOGIN
+        ========================== */}
 
         <Route
           path="/admin/login"
           element={<AdminLogin />}
         />
 
-        {/* Protected Admin Routes */}
+        {/* =========================
+            PROTECTED ADMIN ROUTES
+        ========================== */}
 
         <Route element={<ProtectedRoute />}>
+
           <Route
             path="/admin"
             element={<AdminDashboard />}
@@ -88,15 +122,19 @@ const App = () => {
             path="/admin/settings"
             element={<AdminSetting />}
           />
+
         </Route>
 
-        {/* 404 */}
+        {/* =========================
+            404 PAGE
+        ========================== */}
 
         <Route
           path="*"
           element={
             <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#080a08]">
               <div className="text-center">
+
                 <h1 className="text-5xl font-bold text-gray-900 dark:text-white">
                   404
                 </h1>
@@ -107,17 +145,33 @@ const App = () => {
 
                 <a
                   href="/admin/login"
-                  className="mt-6 inline-block rounded-xl bg-lime-300 px-5 py-3 font-semibold text-gray-900 transition hover:bg-lime-400"
+                  className="
+                    mt-6
+                    inline-block
+                    rounded-xl
+                    bg-lime-300
+                    px-5
+                    py-3
+                    font-semibold
+                    text-gray-900
+                    transition
+                    hover:bg-lime-400
+                  "
                 >
                   Admin Login
                 </a>
+
               </div>
             </div>
           }
         />
+
       </Routes>
 
-      {/* AI Chatbot */}
+      {/* =========================
+          AI CHATBOT
+      ========================== */}
+
       <AIChatbot />
     </>
   );
