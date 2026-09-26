@@ -315,9 +315,7 @@ const AIChatbot = () => {
           `}
           style={{
             /*
-             * When keyboard opens, visual viewport becomes smaller.
-             * Moving the chat window above the keyboard keeps the
-             * input completely visible.
+             * Move chatbot above the mobile keyboard.
              */
             bottom:
               keyboardOpen && window.visualViewport
@@ -577,7 +575,6 @@ const AIChatbot = () => {
 
           {/* =================================================
               BOOKING CTA
-
               Hide while keyboard is open on mobile.
           ================================================= */}
 
@@ -719,63 +716,70 @@ const AIChatbot = () => {
 
       {/* =====================================================
           FLOATING AI BUTTON
+          
+          IMPORTANT:
+          Hide this button while the mobile keyboard is open.
+          This prevents the X button from appearing above the
+          Send button.
       ===================================================== */}
 
-      <button
-        type="button"
-        onClick={() => {
-          if (isOpen) {
-            closeChatbot();
-          } else {
-            setIsOpen(true);
+      {!keyboardOpen && (
+        <button
+          type="button"
+          onClick={() => {
+            if (isOpen) {
+              closeChatbot();
+            } else {
+              setIsOpen(true);
+            }
+          }}
+          aria-label={
+            isOpen
+              ? "Close LeadAxis AI"
+              : "Open LeadAxis AI"
           }
-        }}
-        aria-label={
-          isOpen
-            ? "Close LeadAxis AI"
-            : "Open LeadAxis AI"
-        }
-        className={`
-          fixed
-          bottom-5
-          right-4
-          z-[1000]
-          flex
-          h-14
-          w-14
-          items-center
-          justify-center
-          rounded-full
-          bg-[#0a0d0a]
-          text-lime-300
-          shadow-[0_8px_30px_rgba(0,0,0,0.22)]
-          ring-1
-          ring-white/10
-          transition-all
-          duration-300
-          ease-out
-          active:scale-90
-          hover:scale-105
-          hover:bg-gray-900
-          hover:shadow-[0_12px_35px_rgba(0,0,0,0.28)]
-          sm:bottom-6
-          sm:right-6
-        `}
-      >
-        {isOpen ? (
-          <X size={22} />
-        ) : (
-          <Bot size={23} />
-        )}
+          className="
+            fixed
+            bottom-5
+            right-4
+            z-[1000]
+            flex
+            h-14
+            w-14
+            items-center
+            justify-center
+            rounded-full
+            bg-[#0a0d0a]
+            text-lime-300
+            shadow-[0_8px_30px_rgba(0,0,0,0.22)]
+            ring-1
+            ring-white/10
+            transition-all
+            duration-300
+            ease-out
+            active:scale-90
+            hover:scale-105
+            hover:bg-gray-900
+            hover:shadow-[0_12px_35px_rgba(0,0,0,0.28)]
+            sm:bottom-6
+            sm:right-6
+          "
+        >
+          {isOpen ? (
+            <X size={22} />
+          ) : (
+            <Bot size={23} />
+          )}
 
-        {!isOpen && (
-          <span className="absolute right-0.5 top-0.5 flex h-3.5 w-3.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-300 opacity-60" />
+          {!isOpen && (
+            <span className="absolute right-0.5 top-0.5 flex h-3.5 w-3.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-300 opacity-60" />
 
-            <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-[#0a0d0a] bg-lime-400" />
-          </span>
-        )}
-      </button>
+              <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-[#0a0d0a] bg-lime-400" />
+            </span>
+          )}
+        </button>
+      )}
     </>
   );
 };
