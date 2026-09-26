@@ -15,6 +15,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const AIChatbot = () => {
   const navigate = useNavigate();
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -22,6 +23,8 @@ const AIChatbot = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   const [messages, setMessages] = useState([
     {
@@ -32,30 +35,63 @@ const AIChatbot = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Open / Close Animation
+  | MOBILE KEYBOARD DETECTION
   |--------------------------------------------------------------------------
   */
+
+  useEffect(() => {
+    if (!window.visualViewport) return;
+
+    const viewport = window.visualViewport;
+
+    const handleViewportResize = () => {
+      const keyboardHeight =
+        window.innerHeight - viewport.height;
+
+      setKeyboardOpen(keyboardHeight > 120);
+    };
+
+    viewport.addEventListener("resize", handleViewportResize);
+
+    return () => {
+      viewport.removeEventListener(
+        "resize",
+        handleViewportResize
+      );
+    };
+  }, []);
+
+  /*
+  |--------------------------------------------------------------------------
+  | OPEN / CLOSE ANIMATION
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
     if (isOpen) {
       requestAnimationFrame(() => {
-        setIsVisible(true);
+        requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
       });
 
       if (window.innerWidth >= 640) {
         setTimeout(() => {
           inputRef.current?.focus();
-        }, 300);
+        }, 350);
       }
     } else {
       setIsVisible(false);
+      setKeyboardOpen(false);
     }
   }, [isOpen]);
 
   /*
   |--------------------------------------------------------------------------
-  | Scroll To Latest Message
+  | AUTO SCROLL
   |--------------------------------------------------------------------------
   */
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -69,9 +105,10 @@ const AIChatbot = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Send Message
+  | SEND MESSAGE
   |--------------------------------------------------------------------------
   */
+
   const sendMessage = async (customMessage = null) => {
     const message = (customMessage ?? input).trim();
 
@@ -110,7 +147,10 @@ const AIChatbot = () => {
       try {
         data = JSON.parse(responseText);
       } catch {
-        console.error("AI API returned non-JSON response:", responseText);
+        console.error(
+          "AI API returned non-JSON response:",
+          responseText
+        );
 
         throw new Error(
           `AI API returned invalid response. Status: ${response.status}`
@@ -148,9 +188,10 @@ const AIChatbot = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Submit
+  | SUBMIT
   |--------------------------------------------------------------------------
   */
+
   const handleSubmit = (e) => {
     e.preventDefault();
     sendMessage();
@@ -158,9 +199,10 @@ const AIChatbot = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Enter Key
+  | ENTER KEY
   |--------------------------------------------------------------------------
   */
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -170,22 +212,24 @@ const AIChatbot = () => {
 
   /*
   |--------------------------------------------------------------------------
-  | Close Chatbot
+  | CLOSE
   |--------------------------------------------------------------------------
   */
+
   const closeChatbot = () => {
     setIsVisible(false);
 
     setTimeout(() => {
       setIsOpen(false);
-    }, 250);
+    }, 280);
   };
 
   /*
   |--------------------------------------------------------------------------
-  | Quick Questions
+  | QUICK QUESTIONS
   |--------------------------------------------------------------------------
   */
+
   const quickActions = [
     "What does LeadAxis do?",
     "I need qualified leads",
@@ -205,9 +249,9 @@ const AIChatbot = () => {
             fixed
             inset-0
             z-[998]
-            bg-black/30
-            backdrop-blur-[2px]
-            transition-opacity
+            bg-black/40
+            backdrop-blur-[3px]
+            transition-all
             duration-300
             sm:hidden
             ${
@@ -228,16 +272,20 @@ const AIChatbot = () => {
           className={`
             fixed
             z-[999]
+            overflow-hidden
+            bg-white
+
+            /* ================= MOBILE ================= */
 
             inset-x-0
             bottom-0
             flex
-            h-[100dvh]
+            h-[min(88dvh,760px)]
             w-full
             flex-col
-            overflow-hidden
-            rounded-t-[24px]
-            bg-white
+            rounded-t-[26px]
+
+            /* ================= DESKTOP ================= */
 
             sm:bottom-[88px]
             sm:right-6
@@ -251,48 +299,73 @@ const AIChatbot = () => {
 
             shadow-[0_20px_70px_rgba(0,0,0,0.20)]
 
+            /* ================= POP ANIMATION ================= */
+
+            origin-bottom-right
             transform
             transition-all
-            duration-300
-            ease-[cubic-bezier(0.22,1,0.36,1)]
+            duration-[320ms]
+            ease-[cubic-bezier(0.16,1,0.3,1)]
 
             ${
               isVisible
                 ? "translate-y-0 scale-100 opacity-100"
-                : "translate-y-8 scale-[0.97] opacity-0"
+                : "translate-y-8 scale-[0.88] opacity-0"
             }
           `}
+          style={{
+            /*
+             * When keyboard opens, visual viewport becomes smaller.
+             * Moving the chat window above the keyboard keeps the
+             * input completely visible.
+             */
+            bottom:
+              keyboardOpen && window.visualViewport
+                ? `${Math.max(
+                    0,
+                    window.innerHeight -
+                      window.visualViewport.height
+                  )}px`
+                : undefined,
+          }}
         >
-          {/* MOBILE HANDLE */}
+          {/* =================================================
+              MOBILE HANDLE
+          ================================================= */}
 
-          <div className="absolute left-1/2 top-2 z-20 -translate-x-1/2 sm:hidden">
+          <div className="absolute left-1/2 top-2 z-30 -translate-x-1/2 sm:hidden">
             <div className="h-1 w-10 rounded-full bg-white/40" />
           </div>
 
-          {/* HEADER */}
+          {/* =================================================
+              HEADER
+          ================================================= */}
 
           <div className="relative shrink-0 overflow-hidden bg-[#0a0d0a] px-4 pb-4 pt-5 text-white sm:pt-4">
-            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-lime-300/20 blur-3xl" />
+            <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-lime-300/20 blur-3xl" />
 
             <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime-300 text-[#0a0d0a] shadow-lg shadow-lime-300/10">
-                  <Bot size={23} strokeWidth={2.2} />
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-lime-300 text-[#0a0d0a] shadow-lg shadow-lime-300/10 sm:h-11 sm:w-11">
+                  <Bot
+                    size={21}
+                    strokeWidth={2.2}
+                  />
 
                   <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#0a0d0a] bg-lime-400" />
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-1.5 text-[15px] font-semibold">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-[14px] font-semibold sm:text-[15px]">
                     LeadAxis AI
 
                     <Sparkles
                       size={13}
-                      className="text-lime-300"
+                      className="shrink-0 text-lime-300"
                     />
                   </div>
 
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-gray-400">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-gray-400 sm:text-[11px]">
                     <span className="h-1.5 w-1.5 rounded-full bg-lime-400" />
                     Online • AI Assistant
                   </div>
@@ -305,8 +378,9 @@ const AIChatbot = () => {
                 aria-label="Close LeadAxis AI"
                 className="
                   flex
-                  h-10
-                  w-10
+                  h-9
+                  w-9
+                  shrink-0
                   items-center
                   justify-center
                   rounded-full
@@ -316,14 +390,18 @@ const AIChatbot = () => {
                   hover:bg-white/10
                   hover:text-white
                   active:scale-90
+                  sm:h-10
+                  sm:w-10
                 "
               >
-                <X size={20} />
+                <X size={19} />
               </button>
             </div>
           </div>
 
-          {/* MESSAGES */}
+          {/* =================================================
+              MESSAGES
+          ================================================= */}
 
           <div
             className="
@@ -333,17 +411,18 @@ const AIChatbot = () => {
               overscroll-contain
               bg-[#f7f8f6]
               px-3
-              py-5
+              py-4
               sm:px-4
+              sm:py-5
             "
             style={{
               WebkitOverflowScrolling: "touch",
             }}
           >
             {messages.length === 1 && (
-              <div className="mb-6 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-300 text-[#0a0d0a] shadow-sm">
-                  <MessageCircle size={22} />
+              <div className="mb-5 pt-1 text-center">
+                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-lime-300 text-[#0a0d0a] shadow-sm">
+                  <MessageCircle size={21} />
                 </div>
 
                 <p className="text-xs font-medium text-gray-500">
@@ -358,15 +437,24 @@ const AIChatbot = () => {
               return (
                 <div
                   key={index}
-                  className={`mb-3.5 flex ${
-                    isUser ? "justify-end" : "justify-start"
+                  className={`mb-3 flex ${
+                    isUser
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
                   <div
-                    className={`flex max-w-[90%] items-end gap-2 ${
-                      isUser ? "flex-row-reverse" : ""
-                    }`}
+                    className={`
+                      flex
+                      max-w-[88%]
+                      items-end
+                      gap-2
+                      sm:max-w-[90%]
+                      ${isUser ? "flex-row-reverse" : ""}
+                    `}
                   >
+                    {/* AVATAR */}
+
                     <div
                       className={`
                         flex
@@ -384,19 +472,22 @@ const AIChatbot = () => {
                       `}
                     >
                       {isUser ? (
-                        <User size={14} />
+                        <User size={13} />
                       ) : (
-                        <Bot size={14} />
+                        <Bot size={13} />
                       )}
                     </div>
 
+                    {/* MESSAGE */}
+
                     <div
                       className={`
+                        break-words
                         rounded-2xl
                         px-3.5
                         py-2.5
                         text-[13px]
-                        leading-5
+                        leading-[1.45]
                         shadow-sm
                         ${
                           isUser
@@ -412,16 +503,20 @@ const AIChatbot = () => {
               );
             })}
 
+            {/* =================================================
+                LOADING
+            ================================================= */}
+
             {isLoading && (
-              <div className="mb-3.5 flex justify-start">
+              <div className="mb-3 flex justify-start">
                 <div className="flex items-end gap-2">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-300 text-[#0a0d0a]">
-                    <Bot size={14} />
+                    <Bot size={13} />
                   </div>
 
                   <div className="flex items-center gap-2 rounded-2xl rounded-bl-md border border-gray-200 bg-white px-3.5 py-3 shadow-sm">
                     <Loader2
-                      size={15}
+                      size={14}
                       className="animate-spin text-gray-500"
                     />
 
@@ -436,11 +531,14 @@ const AIChatbot = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* QUICK QUESTIONS */}
+          {/* =================================================
+              QUICK QUESTIONS
+              Hide when keyboard is open on mobile.
+          ================================================= */}
 
-          {messages.length === 1 && (
-            <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-3">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          {messages.length === 1 && !keyboardOpen && (
+            <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-2.5 sm:px-3 sm:py-3">
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
                 Quick questions
               </div>
 
@@ -459,7 +557,7 @@ const AIChatbot = () => {
                       bg-gray-50
                       px-3
                       py-2
-                      text-[11px]
+                      text-[10px]
                       font-medium
                       text-gray-600
                       transition
@@ -477,46 +575,56 @@ const AIChatbot = () => {
             </div>
           )}
 
-          {/* BOOKING CTA */}
+          {/* =================================================
+              BOOKING CTA
 
-          <button
-            type="button"
-            onClick={() => {
-              closeChatbot();
+              Hide while keyboard is open on mobile.
+          ================================================= */}
 
-              setTimeout(() => {
-                navigate("/booking");
-              }, 250);
-            }}
-            className="
-              mx-3
-              mb-2.5
-              flex
-              shrink-0
-              items-center
-              justify-center
-              gap-2
-              rounded-xl
-              bg-lime-300
-              px-4
-              py-3
-              text-xs
-              font-bold
-              text-[#0a0d0a]
-              shadow-sm
-              transition-all
-              duration-200
-              active:scale-[0.98]
-              hover:bg-lime-400
-              hover:shadow-md
-              sm:mx-4
-            "
-          >
-            <CalendarDays size={15} />
-            Book a Consultation
-          </button>
+          {!keyboardOpen && (
+            <button
+              type="button"
+              onClick={() => {
+                closeChatbot();
 
-          {/* INPUT */}
+                setTimeout(() => {
+                  navigate("/booking");
+                }, 280);
+              }}
+              className="
+                mx-3
+                mb-2
+                flex
+                shrink-0
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-lime-300
+                px-4
+                py-2.5
+                text-xs
+                font-bold
+                text-[#0a0d0a]
+                shadow-sm
+                transition-all
+                duration-200
+                active:scale-[0.98]
+                hover:bg-lime-400
+                hover:shadow-md
+                sm:mx-4
+                sm:mb-2.5
+                sm:py-3
+              "
+            >
+              <CalendarDays size={14} />
+              Book a Consultation
+            </button>
+          )}
+
+          {/* =================================================
+              INPUT
+          ================================================= */}
 
           <form
             onSubmit={handleSubmit}
@@ -526,21 +634,24 @@ const AIChatbot = () => {
               border-gray-200
               bg-white
               px-3
-              pb-[calc(12px+env(safe-area-inset-bottom))]
-              pt-3
+              pt-2.5
+              pb-[calc(9px+env(safe-area-inset-bottom))]
+              sm:pt-3
+              sm:pb-[calc(12px+env(safe-area-inset-bottom))]
             "
           >
             <div
               className="
                 flex
+                min-h-[46px]
                 items-center
                 gap-2
                 rounded-xl
                 border
                 border-gray-200
                 bg-gray-50
-                px-2.5
-                py-1.5
+                px-2
+                py-1
                 transition
                 focus-within:border-lime-400
                 focus-within:bg-white
@@ -556,6 +667,7 @@ const AIChatbot = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask LeadAxis AI..."
                 disabled={isLoading}
+                autoComplete="off"
                 className="
                   min-w-0
                   flex-1
@@ -596,14 +708,18 @@ const AIChatbot = () => {
               </button>
             </div>
 
-            <p className="mt-1.5 text-center text-[9px] text-gray-400">
-              LeadAxis AI can make mistakes. Verify important information.
-            </p>
+            {!keyboardOpen && (
+              <p className="mt-1.5 text-center text-[9px] text-gray-400">
+                LeadAxis AI can make mistakes. Verify important information.
+              </p>
+            )}
           </form>
         </div>
       )}
 
-      {/* FLOATING AI BUTTON */}
+      {/* =====================================================
+          FLOATING AI BUTTON
+      ===================================================== */}
 
       <button
         type="button"
@@ -615,9 +731,11 @@ const AIChatbot = () => {
           }
         }}
         aria-label={
-          isOpen ? "Close LeadAxis AI" : "Open LeadAxis AI"
+          isOpen
+            ? "Close LeadAxis AI"
+            : "Open LeadAxis AI"
         }
-        className="
+        className={`
           fixed
           bottom-5
           right-4
@@ -642,9 +760,13 @@ const AIChatbot = () => {
           hover:shadow-[0_12px_35px_rgba(0,0,0,0.28)]
           sm:bottom-6
           sm:right-6
-        "
+        `}
       >
-        {isOpen ? <X size={22} /> : <Bot size={23} />}
+        {isOpen ? (
+          <X size={22} />
+        ) : (
+          <Bot size={23} />
+        )}
 
         {!isOpen && (
           <span className="absolute right-0.5 top-0.5 flex h-3.5 w-3.5">
